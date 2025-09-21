@@ -169,6 +169,13 @@ h1{
 .yticks{ inset:14px 14px 36px 14px }
 .xlabels{ margin-top:12px; gap:12px }
 .legend{ margin-top:12px }
+
+/* spacing hard override */
+.grid{ gap:24px !important; }
+.wrap > .card{ margin-bottom:24px; }
+.card > .card{ margin-top:24px; }
+.card .sep{ margin:18px 0; }
+
 </style>
 </head>
 <body>
@@ -427,8 +434,7 @@ function render(){
   const deltaEl = document.getElementById('monthDeltaH');
   deltaEl.textContent = (delta>=0?'+':'') + toHM(Math.abs(delta));
   deltaEl.className = delta>=0? 'ok' : 'bad';
-  const weekMin = Math.round(dayTotals.reduce((s,h)=> s + h*60, 0));
-  document.getElementById('weekTotal').textContent = 'Totaal week: ' + toHM(weekMin);
+  
 
   renderArchive();
 }
@@ -473,6 +479,8 @@ function drawWeek(){
         labels=document.getElementById('xlabels'),
         yt=document.getElementById('yticks');
   bars.innerHTML=''; labels.innerHTML=''; yt.innerHTML='';
+  const weekMin = Math.round(dayTotals.reduce((s,h)=> s + h*60, 0));
+document.getElementById('weekTotal').textContent = 'Totaal week: ' + toHM(weekMin);
 
   const baseMon = mondayOfWeek( addDays(new Date(), weekOffset*7) );
   const endSun  = addDays(baseMon,6);
