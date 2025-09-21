@@ -6,58 +6,140 @@
 <title>Prikklok</title>
 <style>
   :root{
-    --bg:#f6f8fc;--card:#fff;--surface:#eef3fb;--border:#e3e8f0;
-    --text:#1f2a37;--muted:#5f6b7a;--petrol:#2f8f8f;--green:#2ca87f;
-    --pink:#e85d9b;--warn:#e6b800;--bad:#db4a4a
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  h1,h2,h3{margin:.2rem 0 .6rem} h1{font-size:1.3rem} h2{font-size:1.05rem;color:#0f172a}
-  .wrap{max-width:980px;margin:auto;padding:16px}
-  .grid{display:grid;gap:12px}
-  .cols{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:0 1px 0 rgba(15,23,42,.04)}
-  label{display:block;font-size:.85rem;color:var(--muted);margin:.4rem 0 .3rem}
-  input,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#f9fbfe;color:#1f2a37}
-  input[type="time"],input[type="date"]{letter-spacing:.3px}
-  textarea{min-height:46px;resize:vertical}
-  button{cursor:pointer;background:#f3f7ff}
-  button.primary{background:var(--petrol);color:#fff;border:0;font-weight:600}
-  button.ghost{background:#fff}
-  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .row>div{flex:1}
-  .sep{height:1px;background:var(--border);margin:12px 0}
-  table{width:100%;border-collapse:separate;border-spacing:0 6px}
-  th,td{text-align:left;padding:8px 10px} th{color:#475569;font-weight:600}
-  tbody tr{background:var(--surface);border:1px solid var(--border)}
-  tbody tr td:first-child{border-top-left-radius:10px;border-bottom-left-radius:10px}
-  tbody tr td:last-child{border-top-right-radius:10px;border-bottom-right-radius:10px}
-  .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#fff;border:1px solid var(--border);color:#475569;font-size:.75rem}
-  .muted{color:var(--muted)} .ok{color:var(--green)} .bad{color:var(--bad)}
-  .barwrap{position:relative;height:200px;padding:8px 8px 22px;border:1px solid var(--border);border-radius:12px;background:#fff}
-  .bars{position:absolute;inset:8px 8px 22px 8px;display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end}
-  .bar{background:linear-gradient(180deg,#7fd3d3,#3ea7a7);border:1px solid #62bcbc;border-radius:7px;position:relative}
-  .bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.75rem;color:#334155}
-  .xlabels{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:6px}
-  .xlabels div{font-size:.78rem;color:#64748b;text-align:center}
-  .yticks{position:absolute;inset:8px 8px 22px 8px;} .yticks .tick{position:absolute;left:0;right:0;border-top:1px dashed #e7edf7}
-  .target{position:absolute;left:0;right:0;border-top:2px solid var(--pink)}
-  .legend{display:flex;gap:12px;font-size:.82rem;color:#64748b;margin-top:8px}
-  .legend .sw{width:10px;height:10px;border-radius:2px;border:1px solid #62bcbc;background:#3ea7a7}
-  .legend .sw.target{background:var(--pink);border-color:var(--pink)}
-  .kpi{display:flex;gap:10px;flex-wrap:wrap}
-  .kpi .box{flex:1 1 180px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px}
-  .right{float:right}
-  .pauseRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
-  .pauseRow .endcol{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
-  details.collapsible{border:1px solid var(--border);border-radius:12px;padding:10px;background:#fff}
-  details.collapsible>summary{list-style:none;cursor:pointer;font-weight:600;color:#0f172a;display:flex;align-items:center;gap:8px}
-  details.collapsible>summary::-webkit-details-marker{display:none}
-  details.collapsible[open]>summary::before{transform:rotate(90deg)}
-  @media (max-width:520px){
-    .wrap{padding:12px}
-    input,button,textarea{font-size:16px}
-  }
+  --bg:#e7e7e4;          /* zacht grijs (canvas) */
+  --ink:#111;            /* bijna zwart (tekst/lijnen) */
+  --accent:#d9ff6a;      /* neon-lime (overlay/primary) */
+  --muted:#626262;       /* secundaire tekst */
+  --line:#111;           /* dunne lijnen */
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font:16px/1.35 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  letter-spacing:.1px;
+}
+
+/* Layout */
+.wrap{max-width:920px;margin:auto;padding:18px}
+.grid{display:grid;gap:14px}
+.cols{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{
+  background:transparent;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+  box-shadow:none;
+}
+
+/* Typografie */
+h1,h2,h3{margin:.1rem 0 .6rem}
+h1{font-weight:700;font-size:42px;letter-spacing:.5px}
+h2{font-weight:600;font-size:18px}
+.muted{color:var(--muted)}
+
+/* Invoer en knoppen: platte stijl met dunne lijnen */
+label{display:block;font-size:12px;color:var(--muted);margin:.4rem 0 .25rem}
+input,button,textarea{
+  width:100%;padding:12px 14px;border-radius:14px;
+  border:1px solid var(--line);background:transparent;color:var(--ink);
+}
+input[type="time"],input[type="date"]{letter-spacing:.3px}
+textarea{min-height:48px;resize:vertical}
+
+button{cursor:pointer}
+button.primary{
+  background:var(--accent);
+  border:1px solid var(--line);
+  font-weight:700;
+}
+button.ghost{
+  background:transparent;
+  border:1px solid var(--line);
+}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row>div{flex:1}
+.sep{height:1px;background:var(--line);opacity:.2;margin:14px 0}
+
+/* Tabel: grote cellen + dunne lijnen */
+table{width:100%;border-collapse:separate;border-spacing:0}
+thead th{font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+tbody tr{background:#fff}
+th,td{padding:12px 14px;text-align:left;border-top:1px solid var(--line)}
+tbody tr:first-child td{border-top:1px solid var(--line)}
+tbody tr td:first-child{border-left:1px solid var(--line)}
+tbody tr td:last-child{border-right:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:1px solid var(--line)}
+.pill{
+  display:inline-block;margin-left:8px;
+  padding:2px 8px;border-radius:999px;border:1px solid var(--line);
+  background:#fff;font-size:12px;color:var(--ink)
+}
+.right{float:right}
+
+/* Pauzerijen */
+.pauseRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.pauseRow .endcol{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.pauseRow .rm{width:auto;padding:8px 10px}
+
+/* KPI-boxen */
+.kpi{display:flex;gap:10px;flex-wrap:wrap}
+.kpi .box{
+  flex:1 1 200px;background:#fff;border:1px solid var(--line);
+  border-radius:16px;padding:12px
+}
+.ok{color:#0a7a4a}.bad{color:#b92626}
+
+/* Weekgrafiek: minimalistisch */
+.barwrap{
+  position:relative;height:220px;padding:8px 8px 26px;border:1px solid var(--line);
+  border-radius:16px;background:#fff
+}
+.bars{position:absolute;inset:8px 8px 26px 8px;display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end}
+.bar{
+  background:#111; /* solide balken zoals poster-achtig */
+  border:1px solid var(--line);border-radius:6px;position:relative
+}
+.bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--ink)}
+.xlabels{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-top:8px}
+.xlabels div{text-align:center;font-size:12px;color:var(--muted)}
+.yticks{position:absolute;inset:8px 8px 26px 8px}
+.yticks .tick{position:absolute;left:0;right:0;border-top:1px solid var(--line);opacity:.15}
+.target{position:absolute;left:0;right:0;border-top:2px solid var(--ink);opacity:.35}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend .sw{width:10px;height:10px;border-radius:2px;border:1px solid var(--line);background:#111}
+.legend .sw.target{background:var(--accent)}
+
+/* Collapsible archief → poster-achtig blok */
+details.collapsible{border:1px solid var(--line);border-radius:16px;background:#fff}
+details.collapsible>summary{list-style:none;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px}
+
+/* Sync- en exportkaarten blijven, maar in stijl */
+#sync, .card h2 + .row button{}
+
+/* Mobile tweaks: grotere tap targets, poster look */
+@media (max-width:520px){
+  .wrap{padding:12px}
+  input,button,textarea{font-size:16px}
+  h1{font-size:40px}
+}
+
+/* Optioneel: “neon menu”-look voor een overlay via details[open]
+   Je hebt al <details class="collapsible">; open = volle lime cover. */
+details.collapsible[open]{
+  background:var(--accent);
+  border-color:var(--line);
+}
+details.collapsible[open] .content,
+details.collapsible[open] table,
+details.collapsible[open] td,
+details.collapsible[open] th{
+  background:transparent;border-color:var(--line)
+}
+
 </style>
 </head>
 <body>
