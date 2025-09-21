@@ -169,17 +169,10 @@ h1{
 .yticks{ inset:14px 14px 36px 14px }
 .xlabels{ margin-top:12px; gap:12px }
 .legend{ margin-top:12px }
-
-/* spacing hard override */
-.grid{ gap:24px !important; }
-.wrap > .card{ margin-bottom:24px; }
-.card > .card{ margin-top:24px; }
-.card .sep{ margin:18px 0; }
-
 </style>
 </head>
 <body>
-<div class="wrap grid">
+<div class="wrap grid" style="gap:16px">
   <div class="card">
     <h1>Prikklok</h1>
     <div class="muted" id="todayLabel"></div>
@@ -434,7 +427,8 @@ function render(){
   const deltaEl = document.getElementById('monthDeltaH');
   deltaEl.textContent = (delta>=0?'+':'') + toHM(Math.abs(delta));
   deltaEl.className = delta>=0? 'ok' : 'bad';
-  
+  const weekMin = Math.round(dayTotals.reduce((s,h)=> s + h*60, 0));
+  document.getElementById('weekTotal').textContent = 'Totaal week: ' + toHM(weekMin);
 
   renderArchive();
 }
@@ -480,20 +474,15 @@ function drawWeek(){
         yt=document.getElementById('yticks');
   bars.innerHTML=''; labels.innerHTML=''; yt.innerHTML='';
 
-  const baseMon = mondayOfWeek(addDays(new Date(), weekOffset*7));
+  const baseMon = mondayOfWeek( addDays(new Date(), weekOffset*7) );
   const endSun  = addDays(baseMon,6);
   const startISO = ymdLocal(baseMon), endISO = ymdLocal(endSun);
   const lbl = `${toEU(startISO)} – ${toEU(endISO)}${weekOffset===0?' (deze week)':''}`;
   document.getElementById('weekRange').textContent = lbl;
 
-  // eerst totals berekenen
   const days = Array.from({length:7},(_,i)=> addDays(baseMon,i));
   const dayTotals = days.map(d=> totalPerDate( ymdLocal(d) )/60);
 
-  const weekMin = Math.round(dayTotals.reduce((s,h)=> s + h*60, 0));
-  document.getElementById('weekTotal').textContent = 'Totaal week: ' + toHM(weekMin);
-
-  // grafiek tekenen
   const maxH=Math.max(AVG_DAY_HOURS*1.6, ...dayTotals, 1);
   const steps=4;
   for(let i=0;i<=steps;i++){
@@ -501,18 +490,6 @@ function drawWeek(){
     line.className='tick'; line.style.top=`${100-(i/steps)*100}%`;
     line.style.opacity=i===0?0:1; yt.appendChild(line);
   }
-  document.getElementById('targetLine').style.top = `${100 - (AVG_DAY_HOURS/maxH)*100}%`;
-
-  const weekday=['Ma','Di','Wo','Do','Vr','Za','Zo'];
-  dayTotals.forEach(h=>{
-    const b=document.createElement('div'); b.className='bar';
-    b.style.height=`calc(${Math.max(0,Math.min(100,h/maxH*100))}% - 1px)`;
-    const v=document.createElement('div'); v.className='val';
-    v.textContent = h? h.toFixed(2).replace('.',',') : '';
-    b.appendChild(v); bars.appendChild(b);
-  });
-  labels.innerHTML = weekday.map(w=>`<div>${w}</div>`).join('');
-}
   document.getElementById('targetLine').style.top = `${100 - (AVG_DAY_HOURS/maxH)*100}%`;
 
   const weekday=['Ma','Di','Wo','Do','Vr','Za','Zo'];
