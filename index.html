@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Prikklok</title>
+<style>
+  :root{
+    --bg:#f6f8fc;--card:#fff;--surface:#eef3fb;--border:#e3e8f0;
+    --text:#1f2a37;--muted:#5f6b7a;--petrol:#2f8f8f;--green:#2ca87f;
+    --pink:#e85d9b;--warn:#e6b800;--bad:#db4a4a
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  h1,h2,h3{margin:.2rem 0 .6rem} h1{font-size:1.3rem} h2{font-size:1.05rem;color:#0f172a}
+  .wrap{max-width:980px;margin:auto;padding:16px}
+  .grid{display:grid;gap:12px}
+  .cols{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:0 1px 0 rgba(15,23,42,.04)}
+  label{display:block;font-size:.85rem;color:var(--muted);margin:.4rem 0 .3rem}
+  input,select,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#f9fbfe;color:var(--text)}
+  input[type="time"],input[type="date"]{letter-spacing:.3px}
+  textarea{min-height:46px;resize:vertical}
+  button{cursor:pointer;background:#f3f7ff}
+  button.primary{background:var(--petrol);color:#fff;border:0;font-weight:600}
+  button.ghost{background:#fff}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .row>div{flex:1}
+  .sep{height:1px;background:var(--border);margin:12px 0}
+  table{width:100%;border-collapse:separate;border-spacing:0 6px}
+  th,td{text-align:left;padding:8px 10px} th{color:#475569;font-weight:600}
+  tbody tr{background:var(--surface);border:1px solid var(--border)}
+  tbody tr td:first-child{border-top-left-radius:10px;border-bottom-left-radius:10px}
+  tbody tr td:last-child{border-top-right-radius:10px;border-bottom-right-radius:10px}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#fff;border:1px solid var(--border);color:#475569;font-size:.75rem}
+  .muted{color:var(--muted)} .ok{color:var(--green)} .bad{color:var(--bad)}
+  .barwrap{position:relative;height:200px;padding:8px 8px 22px;border:1px solid var(--border);border-radius:12px;background:#fff}
+  .bars{position:absolute;inset:8px 8px 22px 8px;display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end}
+  .bar{background:linear-gradient(180deg,#7fd3d3,#3ea7a7);border:1px solid #62bcbc;border-radius:7px;position:relative}
+  .bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.75rem;color:#334155}
+  .xlabels{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:6px}
+  .xlabels div{font-size:.78rem;color:#64748b;text-align:center}
+  .yticks{position:absolute;inset:8px 8px 22px 8px;} .yticks .tick{position:absolute;left:0;right:0;border-top:1px dashed #e7edf7}
+  .target{position:absolute;left:0;right:0;border-top:2px solid var(--pink)}
+  .legend{display:flex;gap:12px;font-size:.82rem;color:#64748b;margin-top:8px}
+  .legend .sw{width:10px;height:10px;border-radius:2px;border:1px solid #62bcbc;background:#3ea7a7}
+  .legend .sw.target{background:var(--pink);border-color:var(--pink)}
+  .kpi{display:flex;gap:10px;flex-wrap:wrap}
+  .kpi .box{flex:1 1 180px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px}
+  .right{float:right}
+  .pauseRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+  .pauseRow .endcol{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+  details.collapsible{border:1px solid var(--border);border-radius:12px;padding:10px;background:#fff}
+  details.collapsible>summary{list-style:none;cursor:pointer;font-weight:600;color:#0f172a;display:flex;align-items:center;gap:8px}
+  details.collapsible>summary::-webkit-details-marker{display:none}
+  details.collapsible>summary::before{content:'▸';display:inline-block;transition:transform .2s ease;color:var(--petrol)}
+  details.collapsible[open]>summary::before{transform:rotate(90deg)}
+  /* Mobile tweaks */
+  @media (max-width:520px){
+    .wrap{padding:12px}
+    input,button,select,textarea{font-size:16px} /* voorkomt iOS zoom */
+  }
+</style>
+</head>
+<body>
+<div class="wrap grid" style="gap:16px">
+  <div class="card">
+    <h1>Prikklok</h1>
+    <div class="muted" id="todayLabel"></div>
+    <div class="sep"></div>
+
+    <!-- ÉÉN HOOFDMODULE -->
+    <div class="card">
+      <h2>Uren registreren</h2>
+      <div class="row">
+        <div><label>Datum</label><input type="date" id="date"></div>
+        <div><label>Start</label><input type="time" id="start"></div>
+        <div><label>Einde <small class="muted">(mag na middernacht)</small></label><input type="time" id="end"></div>
+      </div>
+      <div class="row">
+        <div><label>Pauzes (extra min)</label><input type="number" id="pauseExtra" min="0" step="1" placeholder="bv. 15"></div>
+        <div><label>Of: totaal gewerkt (min)</label><input type="number" id="totalOverride" min="0" step="1" placeholder="bv. 450"></div>
+        <div><label>Dagnotitie</label><input id="dayNote" placeholder="optioneel"></div>
+      </div>
+
+      <label style="margin-top:.6rem">Pauzes met notitie</label>
+      <div id="pauseList"></div>
+      <div class="row">
+        <div style="flex-basis:100%"><button class="ghost" id="addPause">+ pauze</button></div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <button class="primary" id="saveEntry">Opslaan</button>
+        <button class="ghost" id="nowStart">Nu starten</button>
+        <button class="ghost" id="nowEnd">Nu stoppen</button>
+        <button class="ghost" id="clearForm">Leeg formulier</button>
+      </div>
+      <small class="muted">Opslag: lokaal (<code>localStorage</code>). Voor sync zie <a href="#sync">onderaan</a>.</small>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="grid cols">
+      <div class="card">
+        <h2>Vandaag</h2>
+        <table>
+          <thead><tr><th>Interval</th><th>Pauze</th><th>Totaal</th><th></th></tr></thead>
+          <tbody id="todayBody"></tbody>
+        </table>
+        <div class="right muted" id="todayTotal"></div>
+      </div>
+
+      <div class="card">
+        <h2>Maandteller</h2>
+        <div class="kpi">
+          <div class="box"><span class="muted">Gewerkte uren</span><b id="monthWorkedH"></b></div>
+          <div class="box"><span class="muted">Te presteren</span><b id="monthExpectedH"></b><small class="muted" id="monthWd"></small></div>
+          <div class="box"><span class="muted">Verschil</span><b id="monthDeltaH"></b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Overzicht van deze week</h2>
+      <div class="barwrap">
+        <div class="yticks" id="yticks"></div>
+        <div class="target" id="targetLine"></div>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div class="xlabels" id="xlabels"></div>
+      <div class="legend"><span class="sw"></span>Uren per dag <span class="sw target"></span>Doel 7,36 u</div>
+    </div>
+
+    <div class="card">
+      <details class="collapsible" id="archiveCollapse">
+        <summary>Archief per dag (per maand gegroepeerd)</summary>
+        <div class="content" id="archiveContainer"></div>
+      </details>
+    </div>
+
+    <div class="grid cols">
+      <div class="card">
+        <h2>Export</h2>
+        <div class="row">
+          <button class="primary" id="exportWeekCsv">CSV huidige week</button>
+          <button class="primary" id="exportMonthCsv">CSV huidige maand</button>
+          <button class="ghost" id="exportJson">Export JSON</button>
+          <label style="flex-basis:100%">Import JSON<input type="file" id="importJson" accept="application/json"></label>
+        </div>
+        <small class="muted">CSV-kolommen: datum, startuur, stopuur, totaal gewerkt, totaal te presteren (7u36), totaal min. pauze, notities pauze.</small>
+      </div>
+
+      <div class="card" id="sync">
+        <h2>Sync (optioneel)</h2>
+        <label>Provider
+          <select id="syncProvider">
+            <option value="none">Geen</option>
+            <option value="supabase">Supabase (REST)</option>
+            <option value="gist">GitHub Gist</option>
+          </select>
+        </label>
+        <div id="syncFields"></div>
+        <div class="row">
+          <button class="ghost" id="syncPush">Upload data</button>
+          <button class="ghost" id="syncPull">Download data</button>
+        </div>
+        <small class="muted">Alternatieven: OneDrive/Google Drive/iCloud via gedeeld JSON-bestand. Deze knoppen ondersteunen Supabase of een privé Gist als eenvoudige API.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* --- Config --- */
+const AVG_DAY_HOURS = 7.36; // 7u36min
+const STORAGE_KEY = 'prikklokEntriesV3';
+
+/* Entry: { id, date:'YYYY-MM-DD', start:'HH:MM'|null, end:'HH:MM'|null,
+            pauses:[{from,to,note}], pauseMin?:number, totalMin:number,
+            note?, source:'form' } */
+
+/* --- Utils --- */
+const pad = n => String(n).padStart(2,'0');
+const toHM = mins => { const h=Math.floor(mins/60), m=mins%60; return `${h}u${pad(m)}`; };
+const parseTime = t => { const [H,M]=t.split(':').map(Number); return H*60+M; };
+const diffHM = (a,b) => { // ondersteunt over middernacht
+  const sa = parseTime(a), sb = parseTime(b);
+  const gross = sb >= sa ? (sb - sa) : (sb + 24*60 - sa);
+  return Math.max(0, gross);
+};
+const ymdLocal = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fmtDate = d => new Date(d+'T00:00:00');
+const todayISO = () => ymdLocal(new Date());
+const toEU = iso => { const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; };
+const isWeekend = dt => { const v=dt.getDay(); return v===0||v===6; };
+const mondayOfWeek = (dt) => { const d=new Date(dt); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d; };
+const addDays = (dt,n)=>{ const d=new Date(dt); d.setDate(d.getDate()+n); return d; };
+const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
+const download = (filename, text, type='text/plain') => {
+  const blob = new Blob([text],{type}); const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+};
+
+/* --- Storage --- */
+const load = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch(e){ return []; } };
+const save = arr => localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+
+/* --- Pauses --- */
+const sumPauses = pauses => {
+  if(!pauses||!pauses.length) return 0;
+  return pauses.reduce((s,p)=> s + (p.from&&p.to ? diffHM(p.from,p.to) : 0), 0);
+};
+const totalPauseMinutes = e => (sumPauses(e.pauses)||0) + (Number(e.pauseMin)||0);
+
+function makePauseRow(containerId, from='', to='', note=''){
+  const c = document.getElementById(containerId);
+  const row = document.createElement('div'); row.className='pauseRow';
+  row.innerHTML = `
+    <div>
+      <label>Van</label>
+      <input type="time" class="pFrom" value="${from}">
+    </div>
+    <div class="endcol">
+      <div>
+        <label>Tot</label>
+        <input type="time" class="pTo" value="${to}">
+      </div>
+      <button class="ghost rm" type="button" title="Verwijder">✕</button>
+      <div style="grid-column:1/-1">
+        <label>Notitie bij pauze</label>
+        <input class="pNote" placeholder="bv. boodschap, verplaatsing" value="${note?.replace?.(/"/g,'&quot;')||''}">
+      </div>
+    </div>`;
+  row.querySelector('.rm').onclick = ()=> row.remove();
+  c.appendChild(row);
+}
+const collectPauses = containerId =>
+  Array.from(document.querySelectorAll(`#${containerId} .pauseRow`)).map(r=>{
+    const from=r.querySelector('.pFrom').value;
+    const to=r.querySelector('.pTo').value;
+    const note=r.querySelector('.pNote').value.trim();
+    return (from&&to) ? {from,to,note:note||undefined} : null;
+  }).filter(Boolean);
+
+/* --- Derived --- */
+const upsert = entry => { const all=load(); const i=all.findIndex(x=>x.id===entry.id); if(i>=0) all[i]=entry; else all.push(entry); save(all); render(); };
+const removeEntry = id => { save(load().filter(x=>x.id!==id)); render(); };
+const entriesByDate = () => load().reduce((acc,e)=>{ (acc[e.date]=acc[e.date]||[]).push(e); return acc; },{});
+const totalPerDate = date => (entriesByDate()[date]||[]).reduce((s,e)=> s+(e.totalMin||0), 0);
+const monthSpan = dt => { const y=dt.getFullYear(), m=dt.getMonth(); return {start:new Date(y,m,1), end:new Date(y,m+1,0)}; };
+const workingDaysInMonth = dt => { const {start,end}=monthSpan(dt); let c=0, d=new Date(start); while(d<=end){ if(!isWeekend(d)) c++; d.setDate(d.getDate()+1);} return c; };
+const totalsThisMonth = () => { const now=new Date(); const {start,end}=monthSpan(now); const map=entriesByDate(); let mins=0; for(const date in map){ const d=fmtDate(date); if(d>=start && d<=end) mins += totalPerDate(date); } return mins; };
+
+/* --- UI render --- */
+function render(){
+  const now=new Date();
+  const fmt=now.toLocaleString('nl-BE',{weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  document.getElementById('todayLabel').textContent = cap(fmt);
+
+  // Vandaag
+  const tISO = todayISO();
+  const tBody = document.getElementById('todayBody'); tBody.innerHTML='';
+  (entriesByDate()[tISO]||[]).sort((a,b)=> (a.start||'')<(b.start||'')?-1:1).forEach(e=>{
+    const tr=document.createElement('tr');
+    const pmin = totalPauseMinutes(e);
+    const interval = e.start && e.end ? `${e.start} – ${e.end}` : (e.totalMin? 'Handmatig totaal' : '—');
+    const ptxt = toHM(pmin);
+    tr.innerHTML = `<td>${interval} ${e.note?`<span class="pill">${e.note}</span>`:''}</td>
+                    <td>${ptxt}</td>
+                    <td>${toHM(e.totalMin||0)}</td>
+                    <td><button class="ghost" type="button" onclick="removeEntry('${e.id}')">Verwijder</button></td>`;
+    tBody.appendChild(tr);
+  });
+  document.getElementById('todayTotal').textContent = `Totaal vandaag: ${toHM(totalPerDate(tISO))}`;
+
+  // Weekgrafiek en maandkpi
+  drawWeek();
+  const mWorkedMin = totalsThisMonth();
+  const wd = workingDaysInMonth(new Date());
+  const expectedMin = Math.round(wd * AVG_DAY_HOURS * 60);
+  const delta = mWorkedMin - expectedMin;
+  document.getElementById('monthWorkedH').textContent = toHM(mWorkedMin);
+  document.getElementById('monthExpectedH').textContent = toHM(expectedMin);
+  document.getElementById('monthWd').textContent = `${wd} werkdagen × 7,36 u`;
+  const deltaEl = document.getElementById('monthDeltaH');
+  deltaEl.textContent = (delta>=0?'+':'') + toHM(Math.abs(delta));
+  deltaEl.className = delta>=0? 'ok' : 'bad';
+
+  renderArchive();
+}
+function renderArchive(){
+  const container=document.getElementById('archiveContainer'); container.innerHTML='';
+  const map=entriesByDate(); const dates=Object.keys(map).sort();
+  if(!dates.length){ container.innerHTML='<div class="muted">Geen data</div>'; return; }
+  const groups={}; dates.forEach(d=>{const [y,m]=d.split('-'); (groups[`${y}-${m}`]=groups[`${y}-${m}`]||[]).push(d);});
+  const keys=Object.keys(groups).sort().reverse();
+  keys.forEach(key=>{
+    const monthDates=[...new Set(groups[key])].sort();
+    let monthMin=0; monthDates.forEach(d=> monthMin+=totalPerDate(d));
+    const monthDate=new Date(key+'-01T00:00:00');
+    const label=cap(monthDate.toLocaleDateString('nl-BE',{month:'long',year:'numeric'}));
+    const dEl=document.createElement('details'); dEl.className='monthGroup';
+    const sEl=document.createElement('summary'); sEl.innerHTML=`<span>${label}</span><span class="monthTotal">Totaal ${toHM(monthMin)}</span>`;
+    dEl.appendChild(sEl);
+    const table=document.createElement('table');
+    const thead=document.createElement('thead'); thead.innerHTML='<tr><th>Datum</th><th>Totaal</th><th>Details</th><th></th></tr>';
+    const tbody=document.createElement('tbody');
+    monthDates.forEach(d=>{
+      const tr=document.createElement('tr');
+      const det = map[d].map(e=>{
+        const parts=[]; if(e.start&&e.end) parts.push(`${e.start}–${e.end}`);
+        const pmin = totalPauseMinutes(e); parts.push(`pauze ${toHM(pmin)}`);
+        const pNotes = (e.pauses||[]).map(p=>p.note).filter(Boolean).join('; ');
+        if(pNotes) parts.push(`“${pNotes}”`);
+        if(e.note) parts.push(`dag: “${e.note}”`);
+        return parts.join(' · ');
+      }).join(' | ');
+      tr.innerHTML = `<td>${toEU(d)}</td><td>${toHM(totalPerDate(d))}</td><td class="muted">${det||'—'}</td>
+                      <td><button class="ghost" type="button" onclick="deleteDay('${d}')">Wis dag</button></td>`;
+      tbody.appendChild(tr);
+    });
+    table.appendChild(thead); table.appendChild(tbody); dEl.appendChild(table); container.appendChild(dEl);
+  });
+}
+function deleteDay(date){ save(load().filter(e=>e.date!==date)); render(); }
+function drawWeek(){
+  const bars=document.getElementById('bars'), labels=document.getElementById('xlabels'), yt=document.getElementById('yticks');
+  bars.innerHTML=''; labels.innerHTML=''; yt.innerHTML='';
+  const now=new Date(); const mon=mondayOfWeek(now);
+  const days=Array.from({length:7},(_,i)=> addDays(mon,i));
+  const dayTotals=days.map(d=> totalPerDate( ymdLocal(d) )/60);
+  const maxH=Math.max(AVG_DAY_HOURS*1.6, ...dayTotals, 1);
+  const steps=4; for(let i=0;i<=steps;i++){ const y=(i/steps)*100; const line=document.createElement('div'); line.className='tick'; line.style.top=`${100-y}%`; line.style.opacity=i===0?0:1; yt.appendChild(line); }
+  document.getElementById('targetLine').style.top = `${100 - (AVG_DAY_HOURS/maxH)*100}%`;
+  const weekday=['Ma','Di','Wo','Do','Vr','Za','Zo'];
+  dayTotals.forEach((h,idx)=>{
+    const b=document.createElement('div'); b.className='bar'; b.style.height=`calc(${Math.max(0,Math.min(100,h/maxH*100))}% - 1px)`;
+    const v=document.createElement('div'); v.className='val'; v.textContent = h? h.toFixed(2).replace('.',',') : '';
+    b.appendChild(v); bars.appendChild(b); const xl=document.createElement('div'); xl.textContent=weekday[idx]; labels.appendChild(xl);
+  });
+}
+
+/* --- Calculations and actions --- */
+function computeTotalMin(start,end,pauses,pauseExtraMin=0){
+  const gross = (start && end)? diffHM(start,end) : 0;
+  const pmin = (sumPauses(pauses)||0) + (Number(pauseExtraMin)||0);
+  return Math.max(0, gross - pmin);
+}
+
+function saveFromForm(){
+  const date = document.getElementById('date').value || todayISO();
+  const s = document.getElementById('start').value;
+  const e = document.getElementById('end').value;
+  const pauses = collectPauses('pauseList');
+  const pauseMin = Number(document.getElementById('pauseExtra').value||0);
+  let totalWorked = Number(document.getElementById('totalOverride').value||0);
+  if(!totalWorked){ if(s && e){ totalWorked = computeTotalMin(s,e,pauses,pauseMin); } }
+  if(!totalWorked){ alert('Vul start/einde (+ pauzes) in of een totaal gewerkt aantal minuten.'); return; }
+  const note = document.getElementById('dayNote').value.trim();
+  const entry = { id: crypto.randomUUID(), date, start:s||null, end:e||null, pauses, pauseMin: pauseMin||0, totalMin: totalWorked, note: note||undefined, source:'form' };
+  upsert(entry);
+  clearForm();
+}
+function clearForm(){
+  ['start','end','pauseExtra','totalOverride','dayNote'].forEach(id=> document.getElementById(id).value='');
+  document.getElementById('date').value = todayISO();
+  document.getElementById('pauseList').innerHTML=''; makePauseRow('pauseList');
+}
+function setNow(id){ const now=new Date(); const t=pad(now.getHours())+":"+pad(now.getMinutes()); document.getElementById(id).value=t; }
+
+/* --- Exports --- */
+function entriesInRange(startDateISO, endDateISO){
+  const map=entriesByDate(); const out=[];
+  Object.keys(map).forEach(d=>{
+    if(d>=startDateISO && d<=endDateISO){ out.push(...map[d]); }
+  });
+  return out.sort((a,b)=> (a.date+b.start) < (b.date+a.start) ? -1:1);
+}
+function entryToCsvRow(e){
+  const pauseTotal = totalPauseMinutes(e);
+  const pauseNotes = (e.pauses||[]).map(p=>p.note).filter(Boolean).join('; ');
+  const tePresteren = Math.round(AVG_DAY_HOURS*60); // 7u36=456
+  return [
+    e.date, e.start||'', e.end||'', e.totalMin, tePresteren, pauseTotal, `"${pauseNotes.replaceAll('"','""')||''}"`
+  ].join(',');
+}
+function exportWeekCsv(){
+  const now=new Date(); const mon=mondayOfWeek(now);
+  const startISO=ymdLocal(mon), endISO=ymdLocal(addDays(mon,6));
+  const list=entriesInRange(startISO,endISO);
+  const header='datum,startuur,stopuur,totaal_gewerkt_min,totaal_te_presteren_min,totaal_min_pauze,notities_pauze\n';
+  const csv = header + list.map(entryToCsvRow).join('\n');
+  download(`prikklok-week-${startISO}.csv`, csv, 'text/csv');
+}
+function exportMonthCsv(){
+  const now=new Date(); const {start,end}=monthSpan(now);
+  const startISO=ymdLocal(start), endISO=ymdLocal(end);
+  const list=entriesInRange(startISO,endISO);
+  const header='datum,startuur,stopuur,totaal_gewerkt_min,totaal_te_presteren_min,totaal_min_pauze,notities_pauze\n';
+  const csv = header + list.map(entryToCsvRow).join('\n');
+  download(`prikklok-maand-${startISO.slice(0,7)}.csv`, csv, 'text/csv');
+}
+function exportJson(){ download('prikklok-export.json', JSON.stringify(load(),null,2), 'application/json'); }
+function importJsonFile(file){
+  const reader=new FileReader();
+  reader.onload = () => { try{
+      const incoming=JSON.parse(reader.result||'[]');
+      if(!Array.isArray(incoming)) throw new Error('Geen lijst');
+      save(incoming); render();
+    }catch(e){ alert('Kon JSON niet importeren.'); }
+  };
+  reader.readAsText(file);
+}
+
+/* --- Sync stubs --- */
+function syncUi(provider){
+  const box=document.getElementById('syncFields'); box.innerHTML='';
+  if(provider==='supabase'){
+    box.innerHTML = `
+      <label>REST URL (table endpoint)</label><input id="sbUrl" placeholder="https://xyz.supabase.co/rest/v1/PRIKKLOK">
+      <label>Anon Key</label><input id="sbKey" placeholder="ey...">
+      <small class="muted">Verwacht kolommen: id (text, PK), payload (jsonb). Knoppen doen upsert/get.</small>`;
+  }else if(provider==='gist'){
+    box.innerHTML = `
+      <label>GitHub Token</label><input id="ghToken" placeholder="ghp_...">
+      <label>Gist ID</label><input id="ghGist" placeholder="xxxxxxxxxxxxxxxxxxxx">
+      <label>Bestandsnaam in gist</label><input id="ghFile" value="prikklok.json">`;
+  }
+}
+async function syncPush(){
+  const provider=document.getElementById('syncProvider').value;
+  const data=load();
+  try{
+    if(provider==='supabase'){
+      const url=document.getElementById('sbUrl').value.trim();
+      const key=document.getElementById('sbKey').value.trim();
+      if(!url||!key) return alert('Vul Supabase URL en key in.');
+      const rows=data.map(d=>({id:d.id, payload:d}));
+      await fetch(url,{method:'POST',headers:{'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify(rows)});
+      alert('Upload verzonden.');
+    }else if(provider==='gist'){
+      const token=document.getElementById('ghToken').value.trim();
+      const gist=document.getElementById('ghGist').value.trim();
+      const fname=document.getElementById('ghFile').value.trim()||'prikklok.json';
+      if(!token||!gist) return alert('Vul token en gist id in.');
+      await fetch('https://api.github.com/gists/'+gist,{method:'PATCH',headers:{'Authorization':'token '+token,'Content-Type':'application/json'},body:JSON.stringify({files:{[fname]:{content:JSON.stringify(data,null,2)}}})});
+      alert('Gist geüpdatet.');
+    }else{
+      alert('Kies een provider of gebruik Export JSON.');
+    }
+  }catch(e){ alert('Sync fout. Controleer rechten/URL.'); }
+}
+async function syncPull(){
+  const provider=document.getElementById('syncProvider').value;
+  try{
+    if(provider==='supabase'){
+      const url=document.getElementById('sbUrl').value.trim();
+      const key=document.getElementById('sbKey').value.trim();
+      if(!url||!key) return alert('Vul Supabase URL en key in.');
+      const res=await fetch(url+'?select=*',{headers:{'apikey':key,'Authorization':'Bearer '+key}});
+      const rows=await res.json();
+      const data=rows.map(r=>r.payload).filter(Boolean);
+      save(data); render(); alert('Download klaar.');
+    }else if(provider==='gist'){
+      const gist=document.getElementById('ghGist').value.trim();
+      const fname=document.getElementById('ghFile').value.trim()||'prikklok.json';
+      if(!gist) return alert('Vul gist id in.');
+      const res=await fetch('https://api.github.com/gists/'+gist);
+      const j=await res.json();
+      const rawUrl=j.files?.[fname]?.raw_url; if(!rawUrl) return alert('Bestand niet gevonden in gist.');
+      const data=await fetch(rawUrl).then(r=>r.json());
+      save(data); render(); alert('Download klaar.');
+    }else{
+      alert('Kies een provider of gebruik Import JSON.');
+    }
+  }catch(e){ alert('Sync fout.'); }
+}
+
+/* --- Wire up --- */
+window.addEventListener('DOMContentLoaded',()=>{
+  // Defaults
+  document.getElementById('date').value = todayISO();
+  document.getElementById('saveEntry').addEventListener('click', saveFromForm);
+  document.getElementById('nowStart').addEventListener('click', ()=>setNow('start'));
+  document.getElementById('nowEnd').addEventListener('click', ()=>setNow('end'));
+  document.getElementById('clearForm').addEventListener('click', clearForm);
+  document.getElementById('addPause').addEventListener('click', ()=>makePauseRow('pauseList'));
+  makePauseRow('pauseList');
+
+  document.getElementById('exportWeekCsv').addEventListener('click', exportWeekCsv);
+  document.getElementById('exportMonthCsv').addEventListener('click', exportMonthCsv);
+  document.getElementById('exportJson').addEventListener('click', exportJson);
+  document.getElementById('importJson').addEventListener('change', ev=>{ const f=ev.target.files?.[0]; if(f) importJsonFile(f); });
+
+  document.getElementById('syncProvider').addEventListener('change', e=>syncUi(e.target.value));
+  document.getElementById('syncPush').addEventListener('click', syncPush);
+  document.getElementById('syncPull').addEventListener('click', syncPull);
+  syncUi('none');
+
+  render();
+  setInterval(render, 60*1000);
+});
+</script>
+</body>
+</html>
