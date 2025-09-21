@@ -490,7 +490,6 @@ function drawWeek(){
   const days = Array.from({length:7},(_,i)=> addDays(baseMon,i));
   const dayTotals = days.map(d=> totalPerDate( ymdLocal(d) )/60);
 
-  // weektotaal tonen
   const weekMin = Math.round(dayTotals.reduce((s,h)=> s + h*60, 0));
   document.getElementById('weekTotal').textContent = 'Totaal week: ' + toHM(weekMin);
 
