@@ -119,15 +119,20 @@
     </div>
 
     <div class="card">
-      <h2>Overzicht van deze week</h2>
-      <div class="barwrap">
-        <div class="yticks" id="yticks"></div>
-        <div class="target" id="targetLine"></div>
-        <div class="bars" id="bars"></div>
-      </div>
-      <div class="xlabels" id="xlabels"></div>
-      <div class="legend"><span class="sw"></span>Uren per dag <span class="sw target"></span>Doel 7,6 u</div>
-    </div>
+  <h2>Overzicht van deze week</h2>
+<div class="row" style="justify-content:space-between;align-items:center;margin:-4px 0 6px">
+  <div class="muted" id="weekRange"></div>
+  <div class="row" style="gap:6px">
+    <button class="ghost" id="prevWeek">◀</button>
+    <button class="ghost" id="thisWeek">Vandaag</button>
+    <button class="ghost" id="nextWeek">▶</button>
+  </div>
+</div>
+<div class="barwrap" id="weekChart">
+  <div class="yticks" id="yticks"></div>
+  <div class="target" id="targetLine"></div>
+  <div class="bars" id="bars"></div>
+</div>
 
     <div class="card">
       <details class="collapsible" id="archiveCollapse">
@@ -194,6 +199,7 @@ const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
 const download = (filename, text, type='text/plain') => {
   const blob = new Blob([text],{type}); const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+  let weekOffset = 0;
 };
 
 /* --- Storage --- */
@@ -276,7 +282,6 @@ function render(){
     tBody.appendChild(tr);
   });
   document.getElementById('todayTotal').textContent = `Totaal vandaag: ${toHM(totalPerDate(tISO))}`;
-
   drawWeek();
   const mWorkedMin = totalsThisMonth();
   const wd = workingDaysInMonth(new Date());
@@ -327,21 +332,40 @@ function renderArchive(){
 }
 function deleteDay(date){ save(load().filter(e=>e.date!==date)); render(); }
 function drawWeek(){
-  const bars=document.getElementById('bars'), labels=document.getElementById('xlabels'), yt=document.getElementById('yticks');
+  const bars=document.getElementById('bars'),
+        labels=document.getElementById('xlabels'),
+        yt=document.getElementById('yticks');
   bars.innerHTML=''; labels.innerHTML=''; yt.innerHTML='';
-  const now=new Date(); const mon=mondayOfWeek(now);
-  const days=Array.from({length:7},(_,i)=> addDays(mon,i));
-  const dayTotals=days.map(d=> totalPerDate( ymdLocal(d) )/60);
+
+  const baseMon = mondayOfWeek( addDays(new Date(), weekOffset*7) );
+  const endSun  = addDays(baseMon,6);
+  const startISO = ymdLocal(baseMon), endISO = ymdLocal(endSun);
+  const lbl = `${toEU(startISO)} – ${toEU(endISO)}${weekOffset===0?' (deze week)':''}`;
+  document.getElementById('weekRange').textContent = lbl;
+
+  const days = Array.from({length:7},(_,i)=> addDays(baseMon,i));
+  const dayTotals = days.map(d=> totalPerDate( ymdLocal(d) )/60);
+
   const maxH=Math.max(AVG_DAY_HOURS*1.6, ...dayTotals, 1);
-  const steps=4; for(let i=0;i<=steps;i++){ const y=(i/steps)*100; const line=document.createElement('div'); line.className='tick'; line.style.top=`${100-y}%`; line.style.opacity=i===0?0:1; yt.appendChild(line); }
+  const steps=4;
+  for(let i=0;i<=steps;i++){
+    const line=document.createElement('div');
+    line.className='tick'; line.style.top=`${100-(i/steps)*100}%`;
+    line.style.opacity=i===0?0:1; yt.appendChild(line);
+  }
   document.getElementById('targetLine').style.top = `${100 - (AVG_DAY_HOURS/maxH)*100}%`;
+
   const weekday=['Ma','Di','Wo','Do','Vr','Za','Zo'];
   dayTotals.forEach((h,idx)=>{
-    const b=document.createElement('div'); b.className='bar'; b.style.height=`calc(${Math.max(0,Math.min(100,h/maxH*100))}% - 1px)`;
-    const v=document.createElement('div'); v.className='val'; v.textContent = h? h.toFixed(2).replace('.',',') : '';
-    b.appendChild(v); bars.appendChild(b); const xl=document.createElement('div'); xl.textContent=weekday[idx]; labels.appendChild(xl);
+    const b=document.createElement('div'); b.className='bar';
+    b.style.height=`calc(${Math.max(0,Math.min(100,h/maxH*100))}% - 1px)`;
+    const v=document.createElement('div'); v.className='val';
+    v.textContent = h? h.toFixed(2).replace('.',',') : '';
+    b.appendChild(v); bars.appendChild(b);
   });
+  labels.innerHTML = weekday.map(w=>`<div>${w}</div>`).join('');
 }
+
 
 /* --- Calculations and actions --- */
 function computeTotalMin(start,end,pauses,pauseExtraMin=0){
@@ -552,6 +576,27 @@ window.addEventListener('DOMContentLoaded',()=>{
 
   render();
   setInterval(render, 60*1000);
+  
+  // weekknoppen
+document.getElementById('prevWeek').addEventListener('click', ()=>{ weekOffset--; drawWeek(); });
+document.getElementById('nextWeek').addEventListener('click', ()=>{ weekOffset++; drawWeek(); });
+document.getElementById('thisWeek').addEventListener('click', ()=>{ weekOffset=0; drawWeek(); });
+
+// swipe op grafiek
+const wc = document.getElementById('weekChart');
+let sx=null;
+wc.addEventListener('touchstart', e=>{ sx=e.changedTouches[0].clientX; }, {passive:true});
+wc.addEventListener('touchend', e=>{
+  if(sx==null) return;
+  const dx=e.changedTouches[0].clientX - sx;
+  if(Math.abs(dx)>50){ weekOffset += dx<0 ? 1 : -1; drawWeek(); }
+  sx=null;
+},{passive:true});
+
+// pijltjestoetsen
+window.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft'){ weekOffset--; drawWeek(); }
+  if(e.key==='ArrowRight'){ weekOffset++; drawWeek(); }
 });
 </script>
 </body>
