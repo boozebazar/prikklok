@@ -174,7 +174,7 @@
 <script>
 /* --- Config --- */
 const AVG_DAY_HOURS = 7.36; // 7u36min
-const STORAGE_KEY = 'prikklokEntriesV3';
+const STORAGE_KEY = 'prikklokEntriesV2';
 
 /* Entry: { id, date:'YYYY-MM-DD', start:'HH:MM'|null, end:'HH:MM'|null,
             pauses:[{from,to,note}], pauseMin?:number, totalMin:number,
@@ -204,7 +204,6 @@ const download = (filename, text, type='text/plain') => {
 
 /* --- Storage --- */
 const load = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch(e){ return []; } };
-const save = arr => localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
 
 /* --- Pauses --- */
 const sumPauses = pauses => {
@@ -362,6 +361,11 @@ function saveFromForm(){
   upsert(entry);
   clearForm();
 }
+    function save(arr){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  scheduleSyncPush();
+}
+
 function clearForm(){
   ['start','end','pauseExtra','totalOverride','dayNote'].forEach(id=> document.getElementById(id).value='');
   document.getElementById('date').value = todayISO();
@@ -505,13 +509,27 @@ setInterval(()=>{ if(isAuto()) syncPull(); }, 5*60*1000);
   document.getElementById('exportJson').addEventListener('click', exportJson);
   document.getElementById('importJson').addEventListener('change', ev=>{ const f=ev.target.files?.[0]; if(f) importJsonFile(f); });
 
-  document.getElementById('syncProvider').addEventListener('change', e=>syncUi(e.target.value));
-  document.getElementById('syncPush').addEventListener('click', syncPush);
-  document.getElementById('syncPull').addEventListener('click', syncPull);
-  syncUi('none');
+document.getElementById('syncProvider').addEventListener('change', e=>syncUi(e.target.value));
+document.getElementById('syncPush').addEventListener('click', syncPush);
+document.getElementById('syncPull').addEventListener('click', syncPull);
 
-  render();
-  setInterval(render, 60*1000);
+// standaard Gist selecteren + velden invullen uit localStorage
+document.getElementById('syncProvider').value = 'gist';
+syncUi('gist');
+document.getElementById('ghFile').value = 'prikklok.json';
+const t = localStorage.getItem('prikklokToken') || '';
+const g = localStorage.getItem('prikklokGistId') || '';
+if (t) document.getElementById('ghToken').value = t;
+if (g) document.getElementById('ghGist').value = g;
+
+// auto-sync standaard aan
+setAuto(true);
+document.getElementById('autoSync').checked = true;
+autoPullOnLoad();
+
+render();
+setInterval(render, 60*1000);
+
 });
 </script>
 </body>
