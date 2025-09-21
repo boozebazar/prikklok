@@ -18,7 +18,7 @@
   .cols{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
   .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:0 1px 0 rgba(15,23,42,.04)}
   label{display:block;font-size:.85rem;color:var(--muted);margin:.4rem 0 .3rem}
-  input,select,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#f9fbfe;color:#1f2a37}
+  input,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#f9fbfe;color:#1f2a37}
   input[type="time"],input[type="date"]{letter-spacing:.3px}
   textarea{min-height:46px;resize:vertical}
   button{cursor:pointer;background:#f3f7ff}
@@ -53,11 +53,10 @@
   details.collapsible{border:1px solid var(--border);border-radius:12px;padding:10px;background:#fff}
   details.collapsible>summary{list-style:none;cursor:pointer;font-weight:600;color:#0f172a;display:flex;align-items:center;gap:8px}
   details.collapsible>summary::-webkit-details-marker{display:none}
-  details.collapsible>summary::before{content:'▸';display:inline-block;transition:transform .2s ease;color:var(--petrol)}
   details.collapsible[open]>summary::before{transform:rotate(90deg)}
   @media (max-width:520px){
     .wrap{padding:12px}
-    input,button,select,textarea{font-size:16px}
+    input,button,textarea{font-size:16px}
   }
 </style>
 </head>
@@ -83,9 +82,7 @@
 
       <label style="margin-top:.6rem">Pauzes met notitie</label>
       <div id="pauseList"></div>
-      <div class="row">
-        <div style="flex-basis:100%"><button class="ghost" id="addPause">+ pauze</button></div>
-      </div>
+      <div class="row"><div style="flex-basis:100%"><button class="ghost" id="addPause">+ pauze</button></div></div>
 
       <div class="row" style="margin-top:8px">
         <button class="primary" id="saveEntry">Opslaan</button>
@@ -93,7 +90,7 @@
         <button class="ghost" id="nowEnd">Nu stoppen</button>
         <button class="ghost" id="clearForm">Leeg formulier</button>
       </div>
-      <small class="muted">Opslag: lokaal (<code>localStorage</code>). Voor sync zie <a href="#sync">onderaan</a>.</small>
+      <small class="muted">Opslag: lokaal. Sync: automatisch met GitHub Gist (zie onderaan).</small>
     </div>
 
     <div class="sep"></div>
@@ -119,20 +116,23 @@
     </div>
 
     <div class="card">
-  <h2>Overzicht van deze week</h2>
-<div class="row" style="justify-content:space-between;align-items:center;margin:-4px 0 6px">
-  <div class="muted" id="weekRange"></div>
-  <div class="row" style="gap:6px">
-    <button class="ghost" id="prevWeek">◀</button>
-    <button class="ghost" id="thisWeek">Vandaag</button>
-    <button class="ghost" id="nextWeek">▶</button>
-  </div>
-</div>
-<div class="barwrap" id="weekChart">
-  <div class="yticks" id="yticks"></div>
-  <div class="target" id="targetLine"></div>
-  <div class="bars" id="bars"></div>
-</div>
+      <h2>Overzicht van deze week</h2>
+      <div class="row" style="justify-content:space-between;align-items:center;margin:-4px 0 6px">
+        <div class="muted" id="weekRange"></div>
+        <div class="row" style="gap:6px">
+          <button class="ghost" id="prevWeek">◀</button>
+          <button class="ghost" id="thisWeek">Vandaag</button>
+          <button class="ghost" id="nextWeek">▶</button>
+        </div>
+      </div>
+      <div class="barwrap" id="weekChart">
+        <div class="yticks" id="yticks"></div>
+        <div class="target" id="targetLine"></div>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div class="xlabels" id="xlabels"></div>
+      <div class="legend"><span class="sw"></span>Uren per dag <span class="sw target"></span>Doel 7u36</div>
+    </div>
 
     <div class="card">
       <details class="collapsible" id="archiveCollapse">
@@ -150,25 +150,16 @@
           <button class="ghost" id="exportJson">Export JSON</button>
           <label style="flex-basis:100%">Import JSON<input type="file" id="importJson" accept="application/json"></label>
         </div>
-        <small class="muted">CSV-kolommen: datum, startuur, stopuur, totaal gewerkt, totaal te presteren (7u36), totaal min. pauze, notities pauze.</small>
+        <small class="muted">CSV: datum, start, stop, totaal min, te presteren (7u36), pauze min, notities pauze.</small>
       </div>
 
-      <div class="card" id="sync">
-        <h2>Sync (optioneel)</h2>
-        <label>Provider
-          <select id="syncProvider">
-            <option value="none">Geen</option>
-            <option value="supabase">Supabase (REST)</option>
-            <option value="gist">GitHub Gist</option>
-          </select>
-        </label>
-        <div id="syncFields"></div>
-        <div class="row">
-          <button class="ghost" id="syncPush">Upload data</button>
-          <button class="ghost" id="syncPull">Download data</button>
-          <label><input type="checkbox" id="autoSync"> Auto-sync (push na elke wijziging, pull bij opstart)</label>
-        </div>
-        <small class="muted">Alternatieven: OneDrive/Google Drive/iCloud via gedeeld JSON-bestand. Deze knoppen ondersteunen Supabase of een privé Gist als eenvoudige API.</small>
+      <div class="card">
+        <h2>GitHub Gist auto-sync</h2>
+        <label>Gist ID<input id="ghGist" placeholder="bv. 2591...fcc6"></label>
+        <label>GitHub Token<input id="ghToken" placeholder="ghp_..."></label>
+        <label>Bestandsnaam<input id="ghFile" value="prikklok.json"></label>
+        <div class="row"><button class="ghost" id="saveCreds">Bewaar op dit toestel</button></div>
+        <small class="muted">Token en Gist ID worden lokaal bewaard in <code>localStorage</code>. Auto-sync: pull bij laden, push na elke wijziging.</small>
       </div>
     </div>
   </div>
@@ -177,11 +168,11 @@
 <script>
 /* --- Config --- */
 const AVG_DAY_HOURS = 7.6; // 7u36min
-const STORAGE_KEY = 'prikklokEntriesV2';
-
-/* Entry: { id, date:'YYYY-MM-DD', start:'HH:MM'|null, end:'HH:MM'|null,
-            pauses:[{from,to,note}], pauseMin?:number, totalMin:number,
-            note?, source:'form' } */
+const STORAGE_KEY   = 'prikklokEntriesV2';
+const GIST_FILE_KEY = 'prikklokGistFile';
+const GIST_ID_KEY   = 'prikklokGistId';
+const TOKEN_KEY     = 'prikklokToken';
+const DEFAULT_GIST_FILENAME = 'prikklok.json';
 
 /* --- Utils --- */
 const pad = n => String(n).padStart(2,'0');
@@ -199,43 +190,72 @@ const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
 const download = (filename, text, type='text/plain') => {
   const blob = new Blob([text],{type}); const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
-  let weekOffset = 0;
 };
+
+/* weeknavigatie helper */
+let weekOffset = 0;
 
 /* --- Storage --- */
 const load = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch(e){ return []; } };
-let syncTimer=null;
-function scheduleSyncPush(){
-  if(!isAuto()) return;
-  if(document.getElementById('syncProvider').value==='none') return;
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(syncPush, 500);
+function save(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); scheduleSyncPush(); }
+
+/* --- Gist sync (auto) --- */
+const getGistId  = () => (document.getElementById('ghGist')?.value?.trim() || localStorage.getItem(GIST_ID_KEY) || '');
+const getToken   = () => (document.getElementById('ghToken')?.value?.trim() || localStorage.getItem(TOKEN_KEY)   || '');
+const getGistFile= () => (document.getElementById('ghFile') ?.value?.trim() || localStorage.getItem(GIST_FILE_KEY)|| DEFAULT_GIST_FILENAME);
+
+async function gistGet(gistId, token){
+  const r = await fetch('https://api.github.com/gists/'+gistId, {
+    headers: { 'Accept':'application/vnd.github+json', ...(token?{'Authorization':'token '+token}:{}) }
+  });
+  if(!r.ok) throw new Error('GitHub '+r.status+' '+await r.text());
+  return r.json();
 }
-function save(arr){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-  scheduleSyncPush();
+async function gistPatch(gistId, token, filename, content){
+  const r = await fetch('https://api.github.com/gists/'+gistId, {
+    method:'PATCH',
+    headers:{ 'Accept':'application/vnd.github+json', 'Content-Type':'application/json', 'Authorization':'token '+token },
+    body: JSON.stringify({ files: { [filename]: { content } } })
+  });
+  if(!r.ok) throw new Error('GitHub '+r.status+' '+await r.text());
+  return r.json();
+}
+
+let syncTimer=null;
+function scheduleSyncPush(){ clearTimeout(syncTimer); syncTimer=setTimeout(syncPush, 500); }
+
+async function syncPull(){
+  const id=getGistId(); if(!id) return;
+  const t = getToken();
+  const f = getGistFile();
+  try{
+    const j = await gistGet(id, t);
+    const file = j.files?.[f];
+    if(!file) return; // geen bestand in gist
+    const data = file.content ? JSON.parse(file.content) : await (await fetch(file.raw_url)).json();
+    if(Array.isArray(data)){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); render(); }
+  }catch(e){ console.warn('Auto-pull fout:', e.message); }
+}
+async function syncPush(){
+  const id=getGistId(), t=getToken(), f=getGistFile();
+  if(!id || !t) return;
+  try{
+    const content = JSON.stringify(load(), null, 2);
+    await gistPatch(id, t, f, content);
+  }catch(e){ console.warn('Auto-push fout:', e.message); }
 }
 
 /* --- Pauses --- */
-const sumPauses = pauses => {
-  if(!pauses||!pauses.length) return 0;
-  return pauses.reduce((s,p)=> s + (p.from&&p.to ? diffHM(p.from,p.to) : 0), 0);
-};
+const sumPauses = pauses => (!pauses||!pauses.length)?0:pauses.reduce((s,p)=> s + (p.from&&p.to ? diffHM(p.from,p.to) : 0), 0);
 const totalPauseMinutes = e => (sumPauses(e.pauses)||0) + (Number(e.pauseMin)||0);
 
 function makePauseRow(containerId, from='', to='', note=''){
   const c = document.getElementById(containerId);
   const row = document.createElement('div'); row.className='pauseRow';
   row.innerHTML = `
-    <div>
-      <label>Van</label>
-      <input type="time" class="pFrom" value="${from}">
-    </div>
+    <div><label>Van</label><input type="time" class="pFrom" value="${from}"></div>
     <div class="endcol">
-      <div>
-        <label>Tot</label>
-        <input type="time" class="pTo" value="${to}">
-      </div>
+      <div><label>Tot</label><input type="time" class="pTo" value="${to}"></div>
       <button class="ghost rm" type="button" title="Verwijder">✕</button>
       <div style="grid-column:1/-1">
         <label>Notitie bij pauze</label>
@@ -282,14 +302,16 @@ function render(){
     tBody.appendChild(tr);
   });
   document.getElementById('todayTotal').textContent = `Totaal vandaag: ${toHM(totalPerDate(tISO))}`;
+
   drawWeek();
+
   const mWorkedMin = totalsThisMonth();
   const wd = workingDaysInMonth(new Date());
   const expectedMin = Math.round(wd * AVG_DAY_HOURS * 60);
   const delta = mWorkedMin - expectedMin;
   document.getElementById('monthWorkedH').textContent = toHM(mWorkedMin);
   document.getElementById('monthExpectedH').textContent = toHM(expectedMin);
-  document.getElementById('monthWd').textContent = `${wd} werkdagen × 7,6 u`;
+  document.getElementById('monthWd').textContent = `${wd} werkdagen × 7u36`;
   const deltaEl = document.getElementById('monthDeltaH');
   deltaEl.textContent = (delta>=0?'+':'') + toHM(Math.abs(delta));
   deltaEl.className = delta>=0? 'ok' : 'bad';
@@ -331,6 +353,7 @@ function renderArchive(){
   });
 }
 function deleteDay(date){ save(load().filter(e=>e.date!==date)); render(); }
+
 function drawWeek(){
   const bars=document.getElementById('bars'),
         labels=document.getElementById('xlabels'),
@@ -356,7 +379,7 @@ function drawWeek(){
   document.getElementById('targetLine').style.top = `${100 - (AVG_DAY_HOURS/maxH)*100}%`;
 
   const weekday=['Ma','Di','Wo','Do','Vr','Za','Zo'];
-  dayTotals.forEach((h,idx)=>{
+  dayTotals.forEach((h)=>{
     const b=document.createElement('div'); b.className='bar';
     b.style.height=`calc(${Math.max(0,Math.min(100,h/maxH*100))}% - 1px)`;
     const v=document.createElement('div'); v.className='val';
@@ -365,7 +388,6 @@ function drawWeek(){
   });
   labels.innerHTML = weekday.map(w=>`<div>${w}</div>`).join('');
 }
-
 
 /* --- Calculations and actions --- */
 function computeTotalMin(start,end,pauses,pauseExtraMin=0){
@@ -406,22 +428,20 @@ function entryToCsvRow(e){
   const pauseTotal = totalPauseMinutes(e);
   const pauseNotes = (e.pauses||[]).map(p=>p.note).filter(Boolean).join('; ');
   const tePresteren = Math.round(AVG_DAY_HOURS*60); // 456
-  return [
-    e.date, e.start||'', e.end||'', e.totalMin, tePresteren, pauseTotal, `"${(pauseNotes||'').replaceAll('"','""')}"`
-  ].join(',');
+  return [ e.date, e.start||'', e.end||'', e.totalMin, tePresteren, pauseTotal, `"${(pauseNotes||'').replaceAll('"','""')}"` ].join(',');
 }
 function exportWeekCsv(){
   const now=new Date(); const mon=mondayOfWeek(now);
-  const startISO=ymdLocal(mon), endISO=ymdLocal(addDays(mon,6));
-  const list=entriesInRange(startISO,endISO);
+  const startISO=ymdLocal(mon);
+  const list=entriesInRange(startISO, ymdLocal(addDays(mon,6)));
   const header='datum,startuur,stopuur,totaal_gewerkt_min,totaal_te_presteren_min,totaal_min_pauze,notities_pauze\n';
   const csv = header + list.map(entryToCsvRow).join('\n');
   download(`prikklok-week-${startISO}.csv`, csv, 'text/csv');
 }
 function exportMonthCsv(){
   const now=new Date(); const {start,end}=monthSpan(now);
-  const startISO=ymdLocal(start), endISO=ymdLocal(end);
-  const list=entriesInRange(startISO,endISO);
+  const startISO=ymdLocal(start);
+  const list=entriesInRange(startISO, ymdLocal(end));
   const header='datum,startuur,stopuur,totaal_gewerkt_min,totaal_te_presteren_min,totaal_min_pauze,notities_pauze\n';
   const csv = header + list.map(entryToCsvRow).join('\n');
   download(`prikklok-maand-${startISO.slice(0,7)}.csv`, csv, 'text/csv');
@@ -438,110 +458,9 @@ function importJsonFile(file){
   reader.readAsText(file);
 }
 
-/* --- Sync stubs (UI-gestuurd) --- */
-function syncUi(provider){
-  const box=document.getElementById('syncFields'); box.innerHTML='';
-  if(provider==='supabase'){
-    box.innerHTML = `
-      <label>REST URL (table endpoint)</label><input id="sbUrl" placeholder="https://xyz.supabase.co/rest/v1/PRIKKLOK">
-      <label>Anon Key</label><input id="sbKey" placeholder="ey...">
-      <small class="muted">Verwacht kolommen: id (text, PK), payload (jsonb). Knoppen doen upsert/get.</small>`;
-  }else if(provider==='gist'){
-    box.innerHTML = `
-      <label>GitHub Token</label><input id="ghToken" placeholder="ghp_...">
-      <label>Gist ID</label><input id="ghGist" placeholder="xxxxxxxxxxxxxxxxxxxx">
-      <label>Bestandsnaam in gist</label><input id="ghFile" value="prikklok.json">`;
-  }
-}
-
-async function syncPush(){
-  const provider=document.getElementById('syncProvider').value;
-  const data=load();
-  try{
-    if(provider==='supabase'){
-      const url=document.getElementById('sbUrl').value.trim();
-      const key=document.getElementById('sbKey').value.trim();
-      if(!url||!key) return alert('Vul Supabase URL en key in.');
-      const rows=data.map(d=>({id:d.id, payload:d}));
-      const r = await fetch(url,{
-        method:'POST',
-        headers:{
-          'apikey':key,'Authorization':'Bearer '+key,
-          'Content-Type':'application/json','Prefer':'resolution=merge-duplicates',
-          'Accept':'application/json'
-        },
-        body:JSON.stringify(rows)
-      });
-      if(!r.ok) throw new Error('Supabase '+r.status+' '+await r.text());
-      alert('Upload verzonden.');
-    }else if(provider==='gist'){
-      const token=document.getElementById('ghToken').value.trim();
-      const gist=document.getElementById('ghGist').value.trim();
-      const fname=document.getElementById('ghFile').value.trim()||'prikklok.json';
-      if(!token||!gist) return alert('Vul token en gist id in.');
-      const r = await fetch('https://api.github.com/gists/'+gist,{
-        method:'PATCH',
-        headers:{
-          'Authorization':'token '+token,
-          'Accept':'application/vnd.github+json',
-          'Content-Type':'application/json'
-        },
-        body:JSON.stringify({files:{[fname]:{content:JSON.stringify(data,null,2)}}})
-      });
-      if(!r.ok) throw new Error('GitHub '+r.status+' '+await r.text());
-      alert('Gist geüpdatet.');
-    }else{
-      alert('Kies een provider of gebruik Export JSON.');
-    }
-  }catch(e){ alert('Sync fout. '+e.message); }
-}
-
-async function syncPull(){
-  const provider=document.getElementById('syncProvider').value;
-  try{
-    if(provider==='supabase'){
-      const url=document.getElementById('sbUrl').value.trim();
-      const key=document.getElementById('sbKey').value.trim();
-      if(!url||!key) return alert('Vul Supabase URL en key in.');
-      const res=await fetch(url+'?select=*',{headers:{'apikey':key,'Authorization':'Bearer '+key,'Accept':'application/json'}});
-      if(!res.ok) throw new Error('Supabase '+res.status+' '+await res.text());
-      const rows=await res.json();
-      const data=rows.map(r=>r.payload).filter(Boolean);
-      save(data); render(); alert('Download klaar.');
-    }else if(provider==='gist'){
-      const token=document.getElementById('ghToken').value.trim();
-      const gist=document.getElementById('ghGist').value.trim();
-      const fname=document.getElementById('ghFile').value.trim()||'prikklok.json';
-      if(!gist) return alert('Vul gist id in.');
-      const res=await fetch('https://api.github.com/gists/'+gist,{
-        headers:{ 'Accept':'application/vnd.github+json', ...(token?{'Authorization':'token '+token}:{}) }
-      });
-      if(!res.ok) throw new Error('GitHub '+res.status+' '+await res.text());
-      const j=await res.json();
-      const file=j.files?.[fname];
-      if(!file) return alert('Bestand niet gevonden in gist.');
-      const data = file.content ? JSON.parse(file.content) : await (await fetch(file.raw_url)).json();
-      save(data); render(); alert('Download klaar.');
-    }else{
-      alert('Kies een provider of gebruik Import JSON.');
-    }
-  }catch(e){ alert('Sync fout. '+e.message); }
-}
-
-/* --- Auto-sync toggles --- */
-const AUTO_KEY='prikklokAutoSync';
-const isAuto = ()=> localStorage.getItem(AUTO_KEY)==='1';
-const setAuto = v => localStorage.setItem(AUTO_KEY, v?'1':'0');
-async function autoPullOnLoad(){ if(isAuto() && document.getElementById('syncProvider').value!=='none'){ await syncPull(); } }
-
 /* --- Wire up --- */
 window.addEventListener('DOMContentLoaded',()=>{
-  // Auto-checkbox
-  if(localStorage.getItem(AUTO_KEY)===null) setAuto(true);
-  document.getElementById('autoSync').checked = isAuto();
-  document.getElementById('autoSync').addEventListener('change', e=> setAuto(e.target.checked));
-
-  // Defaults form
+  // Form
   document.getElementById('date').value = todayISO();
   document.getElementById('saveEntry').addEventListener('click', saveFromForm);
   document.getElementById('nowStart').addEventListener('click', ()=>setNow('start'));
@@ -556,47 +475,47 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('exportJson').addEventListener('click', exportJson);
   document.getElementById('importJson').addEventListener('change', ev=>{ const f=ev.target.files?.[0]; if(f) importJsonFile(f); });
 
-  // Sync UI
-  document.getElementById('syncProvider').addEventListener('change', e=>syncUi(e.target.value));
-  document.getElementById('syncPush').addEventListener('click', syncPush);
-  document.getElementById('syncPull').addEventListener('click', syncPull);
+  // Gist creds UI
+  document.getElementById('ghFile').value = localStorage.getItem(GIST_FILE_KEY) || DEFAULT_GIST_FILENAME;
+  document.getElementById('ghGist').value = localStorage.getItem(GIST_ID_KEY) || '';
+  document.getElementById('ghToken').value = localStorage.getItem(TOKEN_KEY) || '';
+  document.getElementById('saveCreds').addEventListener('click', ()=>{
+    const id=document.getElementById('ghGist').value.trim();
+    const tk=document.getElementById('ghToken').value.trim();
+    const fn=document.getElementById('ghFile').value.trim()||DEFAULT_GIST_FILENAME;
+    if(id) localStorage.setItem(GIST_ID_KEY,id);
+    if(tk) localStorage.setItem(TOKEN_KEY,tk);
+    localStorage.setItem(GIST_FILE_KEY,fn);
+    alert('Bewaar klaar. Pagina herladen voor auto-pull.');
+    location.reload();
+  });
 
-  // Standaard Gist + velden vanuit localStorage
-  document.getElementById('syncProvider').value = 'gist';
-  syncUi('gist');
-  document.getElementById('ghFile').value = 'prikklok.json';
-  const t = localStorage.getItem('prikklokToken') || '';
-  const g = localStorage.getItem('prikklokGistId') || '';
-  if (t) document.getElementById('ghToken').value = t;
-  if (g) document.getElementById('ghGist').value = g;
-
-  // Auto-sync
-  autoPullOnLoad();
-  setInterval(()=>{ if(isAuto()) syncPull(); }, 5*60*1000);
-
+  // Auto sync
+  syncPull(); // bij laden
+  setInterval(syncPull, 5*60*1000); // periodiek pull
   render();
   setInterval(render, 60*1000);
-  
-  // weekknoppen
-document.getElementById('prevWeek').addEventListener('click', ()=>{ weekOffset--; drawWeek(); });
-document.getElementById('nextWeek').addEventListener('click', ()=>{ weekOffset++; drawWeek(); });
-document.getElementById('thisWeek').addEventListener('click', ()=>{ weekOffset=0; drawWeek(); });
 
-// swipe op grafiek
-const wc = document.getElementById('weekChart');
-let sx=null;
-wc.addEventListener('touchstart', e=>{ sx=e.changedTouches[0].clientX; }, {passive:true});
-wc.addEventListener('touchend', e=>{
-  if(sx==null) return;
-  const dx=e.changedTouches[0].clientX - sx;
-  if(Math.abs(dx)>50){ weekOffset += dx<0 ? 1 : -1; drawWeek(); }
-  sx=null;
-},{passive:true});
+  // Week navi
+  document.getElementById('prevWeek').addEventListener('click', ()=>{ weekOffset--; drawWeek(); });
+  document.getElementById('nextWeek').addEventListener('click', ()=>{ weekOffset++; drawWeek(); });
+  document.getElementById('thisWeek').addEventListener('click', ()=>{ weekOffset=0; drawWeek(); });
 
-// pijltjestoetsen
-window.addEventListener('keydown', e=>{
-  if(e.key==='ArrowLeft'){ weekOffset--; drawWeek(); }
-  if(e.key==='ArrowRight'){ weekOffset++; drawWeek(); }
+  // Swipe
+  const wc = document.getElementById('weekChart'); let sx=null;
+  wc.addEventListener('touchstart', e=>{ sx=e.changedTouches[0].clientX; }, {passive:true});
+  wc.addEventListener('touchend', e=>{
+    if(sx==null) return;
+    const dx=e.changedTouches[0].clientX - sx;
+    if(Math.abs(dx)>50){ weekOffset += dx<0 ? 1 : -1; drawWeek(); }
+    sx=null;
+  }, {passive:true});
+
+  // Pijltjestoetsen
+  window.addEventListener('keydown', e=>{
+    if(e.key==='ArrowLeft'){ weekOffset--; drawWeek(); }
+    if(e.key==='ArrowRight'){ weekOffset++; drawWeek(); }
+  });
 });
 </script>
 </body>
