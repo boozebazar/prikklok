@@ -6,173 +6,106 @@
 <title>Prikklok</title>
 <style>
   :root{
-  --bg:#e7e7e4;          /* zacht grijs (canvas) */
-  --ink:#111;            /* bijna zwart (tekst/lijnen) */
-  --accent:#d9ff6a;      /* neon-lime (overlay/primary) */
-  --muted:#626262;       /* secundaire tekst */
-  --line:#111;           /* dunne lijnen */
-}
+    --bg:#e7e7e4;          /* canvas */
+    --ink:#111;            /* tekst/lijnen */
+    --accent:#d9ff6a;      /* neon-lime */
+    --muted:#626262;       /* secundaire tekst */
+    --line:#111;           /* dunne lijnen */
+  }
 
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--ink);
-  font:16px/1.35 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  letter-spacing:.1px;
-}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font:16px/1.35 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    letter-spacing:.1px;
+  }
 
-/* Layout */
-.wrap{max-width:920px;margin:auto;padding:18px}
-.grid{display:grid;gap:14px}
-.cols{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
-.card{
-  background:transparent;
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:16px;
-  box-shadow:none;
-}
+  /* Layout */
+  .wrap{max-width:920px;margin:auto;padding:24px}
+  .grid{display:grid;gap:24px}
+  .cols{grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+  .card{
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:18px;
+    box-shadow:none;
+  }
+  .wrap > .card{ margin-bottom:24px; }
+  .card > .card{ margin-top:24px; }
 
-/* Typografie */
-h1,h2,h3{margin:.1rem 0 .6rem}
-h1{font-weight:700;font-size:42px;letter-spacing:.5px}
-h2{font-weight:600;font-size:18px}
-.muted{color:var(--muted)}
+  /* Typografie */
+  h1,h2,h3{margin:.1rem 0 .6rem}
+  h1{
+    font-weight:700; font-size:48px; letter-spacing:.06em;
+    text-transform:uppercase; text-align:center; margin:6px 0 14px;
+  }
+  h2{font-weight:600;font-size:18px}
+  .muted{color:var(--muted)}
+  @media (max-width:520px){ h1{font-size:36px} }
 
-/* Invoer en knoppen: platte stijl met dunne lijnen */
-label{display:block;font-size:12px;color:var(--muted);margin:.4rem 0 .25rem}
-input,button,textarea{
-  width:100%;padding:12px 14px;border-radius:14px;
-  border:1px solid var(--line);background:transparent;color:var(--ink);
-}
-input[type="time"],input[type="date"]{letter-spacing:.3px}
-textarea{min-height:48px;resize:vertical}
+  /* Inputs & buttons */
+  label{display:block;font-size:12px;color:var(--muted);margin:.4rem 0 .25rem}
+  input,button,textarea{
+    width:100%;padding:12px 14px;border-radius:14px;
+    border:1px solid var(--line);background:transparent;color:var(--ink);
+  }
+  input[type="time"],input[type="date"]{letter-spacing:.3px}
+  textarea{min-height:48px;resize:vertical}
+  button{cursor:pointer}
+  button.primary{background:var(--accent);border:1px solid var(--line);font-weight:700}
+  button.ghost{background:transparent;border:1px solid var(--line)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .row>div{flex:1}
+  .sep{height:1px;background:var(--line);opacity:.2;margin:18px 0}
 
-button{cursor:pointer}
-button.primary{
-  background:var(--accent);
-  border:1px solid var(--line);
-  font-weight:700;
-}
-button.ghost{
-  background:transparent;
-  border:1px solid var(--line);
-}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.row>div{flex:1}
-.sep{height:1px;background:var(--line);opacity:.2;margin:14px 0}
+  /* Tabel */
+  table{width:100%;border-collapse:separate;border-spacing:0}
+  thead th{font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  tbody tr{background:#fff}
+  th,td{padding:12px 14px;text-align:left;border-top:1px solid var(--line)}
+  tbody tr:first-child td{border-top:1px solid var(--line)}
+  tbody tr td:first-child{border-left:1px solid var(--line)}
+  tbody tr td:last-child{border-right:1px solid var(--line)}
+  tbody tr:last-child td{border-bottom:1px solid var(--line)}
+  .pill{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:12px;color:var(--ink)}
+  .right{float:right}
 
-/* Tabel: grote cellen + dunne lijnen */
-table{width:100%;border-collapse:separate;border-spacing:0}
-thead th{font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-tbody tr{background:#fff}
-th,td{padding:12px 14px;text-align:left;border-top:1px solid var(--line)}
-tbody tr:first-child td{border-top:1px solid var(--line)}
-tbody tr td:first-child{border-left:1px solid var(--line)}
-tbody tr td:last-child{border-right:1px solid var(--line)}
-tbody tr:last-child td{border-bottom:1px solid var(--line)}
-.pill{
-  display:inline-block;margin-left:8px;
-  padding:2px 8px;border-radius:999px;border:1px solid var(--line);
-  background:#fff;font-size:12px;color:var(--ink)
-}
-.right{float:right}
+  /* Pauzerijen */
+  .pauseRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .pauseRow .endcol{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+  .pauseRow .rm{width:auto;padding:8px 10px}
 
-/* Pauzerijen */
-.pauseRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.pauseRow .endcol{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
-.pauseRow .rm{width:auto;padding:8px 10px}
+  /* KPI-boxen */
+  .kpi{display:flex;gap:10px;flex-wrap:wrap}
+  .kpi .box{flex:1 1 200px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px}
+  .ok{color:#0a7a4a}.bad{color:#b92626}
 
-/* KPI-boxen */
-.kpi{display:flex;gap:10px;flex-wrap:wrap}
-.kpi .box{
-  flex:1 1 200px;background:#fff;border:1px solid var(--line);
-  border-radius:16px;padding:12px
-}
-.ok{color:#0a7a4a}.bad{color:#b92626}
+  /* Weekgrafiek */
+  .barwrap{position:relative;height:300px;padding:14px 14px 36px;border:1px solid var(--line);border-radius:16px;background:#fff}
+  .bars{position:absolute;inset:14px 14px 36px 14px;display:grid;grid-template-columns:repeat(7,1fr);gap:12px;align-items:end}
+  .bar{background:#111;border:1px solid var(--line);border-radius:6px;position:relative}
+  .bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--ink)}
+  .xlabels{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-top:12px}
+  .xlabels div{text-align:center;font-size:12px;color:var(--muted)}
+  .yticks{position:absolute;inset:14px 14px 36px 14px}
+  .yticks .tick{position:absolute;left:0;right:0;border-top:1px solid var(--line);opacity:.15}
+  .target{position:absolute;left:0;right:0;border-top:2px solid var(--ink);opacity:.35}
+  .legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:12px}
+  .legend .sw{width:10px;height:10px;border-radius:2px;border:1px solid var(--line);background:#111}
+  .legend .sw.target{background:var(--accent)}
 
-/* Weekgrafiek: minimalistisch */
-.barwrap{
-  position:relative;height:220px;padding:8px 8px 26px;border:1px solid var(--line);
-  border-radius:16px;background:#fff
-}
-.bars{position:absolute;inset:8px 8px 26px 8px;display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end}
-.bar{
-  background:#111; /* solide balken zoals poster-achtig */
-  border:1px solid var(--line);border-radius:6px;position:relative
-}
-.bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--ink)}
-.xlabels{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-top:8px}
-.xlabels div{text-align:center;font-size:12px;color:var(--muted)}
-.yticks{position:absolute;inset:8px 8px 26px 8px}
-.yticks .tick{position:absolute;left:0;right:0;border-top:1px solid var(--line);opacity:.15}
-.target{position:absolute;left:0;right:0;border-top:2px solid var(--ink);opacity:.35}
-.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:8px}
-.legend .sw{width:10px;height:10px;border-radius:2px;border:1px solid var(--line);background:#111}
-.legend .sw.target{background:var(--accent)}
-
-/* Collapsible archief → poster-achtig blok */
-details.collapsible{border:1px solid var(--line);border-radius:16px;background:#fff}
-details.collapsible>summary{list-style:none;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px}
-
-/* Sync- en exportkaarten blijven, maar in stijl */
-#sync, .card h2 + .row button{}
-
-/* Mobile tweaks: grotere tap targets, poster look */
-@media (max-width:520px){
-  .wrap{padding:12px}
-  input,button,textarea{font-size:16px}
-  h1{font-size:40px}
-}
-
-/* Optioneel: “neon menu”-look voor een overlay via details[open]
-   Je hebt al <details class="collapsible">; open = volle lime cover. */
-details.collapsible[open]{
-  background:var(--accent);
-  border-color:var(--line);
-}
-details.collapsible[open] .content,
-details.collapsible[open] table,
-details.collapsible[open] td,
-details.collapsible[open] th{
-  background:transparent;border-color:var(--line)
-}
-/* --- spacing + titel + ruimere weekgrafiek --- */
-
-/* Meer ruimte tussen de afgeronde blokken */
-.wrap{ padding:24px }
-.grid{ gap:24px }
-.cols{ gap:24px }
-.card{ border-radius:20px; padding:18px }
-.card + .card{ margin-top:22px }   /* extra marge tussen opeenvolgende cards */
-
-/* Titel centreren, groter, kapitalen */
-h1{
-  text-transform:uppercase;
-  text-align:center;
-  font-size:48px;
-  letter-spacing:.06em;
-  margin:6px 0 14px;
-}
-@media (max-width:520px){
-  h1{ font-size:36px }
-}
-
-/* Weekoverzicht: ruimere layout */
-#weekChart{
-  height:300px;
-  padding:14px 14px 36px;
-}
-.bars{ inset:14px 14px 36px 14px; gap:12px }
-.yticks{ inset:14px 14px 36px 14px }
-.xlabels{ margin-top:12px; gap:12px }
-.legend{ margin-top:12px }
+  /* Collapsible archief */
+  details.collapsible{border:1px solid var(--line);border-radius:16px;background:#fff}
+  details.collapsible>summary{list-style:none;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px}
+  details.collapsible[open]{background:var(--accent);border-color:var(--line)}
 </style>
 </head>
 <body>
-<div class="wrap grid" style="gap:16px">
+<div class="wrap grid">
   <div class="card">
     <h1>Prikklok</h1>
     <div class="muted" id="todayLabel"></div>
@@ -279,7 +212,7 @@ h1{
 
 <script>
 /* --- Config --- */
-const AVG_DAY_HOURS = 7.6; // 7u36min
+const AVG_DAY_HOURS = 7.6; // 7u36
 const STORAGE_KEY   = 'prikklokEntriesV2';
 const GIST_FILE_KEY = 'prikklokGistFile';
 const GIST_ID_KEY   = 'prikklokGistId';
@@ -343,7 +276,7 @@ async function syncPull(){
   try{
     const j = await gistGet(id, t);
     const file = j.files?.[f];
-    if(!file) return; // geen bestand in gist
+    if(!file) return;
     const data = file.content ? JSON.parse(file.content) : await (await fetch(file.raw_url)).json();
     if(Array.isArray(data)){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); render(); }
   }catch(e){ console.warn('Auto-pull fout:', e.message); }
@@ -406,9 +339,8 @@ function render(){
     const tr=document.createElement('tr');
     const pmin = totalPauseMinutes(e);
     const interval = e.start && e.end ? `${e.start} – ${e.end}` : (e.totalMin? 'Handmatig totaal' : '—');
-    const ptxt = toHM(pmin);
     tr.innerHTML = `<td>${interval} ${e.note?`<span class="pill">${e.note}</span>`:''}</td>
-                    <td>${ptxt}</td>
+                    <td>${toHM(pmin)}</td>
                     <td>${toHM(e.totalMin||0)}</td>
                     <td><button class="ghost" type="button" onclick="removeEntry('${e.id}')">Verwijder</button></td>`;
     tBody.appendChild(tr);
@@ -427,11 +359,10 @@ function render(){
   const deltaEl = document.getElementById('monthDeltaH');
   deltaEl.textContent = (delta>=0?'+':'') + toHM(Math.abs(delta));
   deltaEl.className = delta>=0? 'ok' : 'bad';
-  const weekMin = Math.round(dayTotals.reduce((s,h)=> s + h*60, 0));
-  document.getElementById('weekTotal').textContent = 'Totaal week: ' + toHM(weekMin);
 
   renderArchive();
 }
+
 function renderArchive(){
   const container=document.getElementById('archiveContainer'); container.innerHTML='';
   const map=entriesByDate(); const dates=Object.keys(map).sort();
@@ -468,20 +399,23 @@ function renderArchive(){
 }
 function deleteDay(date){ save(load().filter(e=>e.date!==date)); render(); }
 
+/* --- Week grafiek + totaal --- */
 function drawWeek(){
-  const bars=document.getElementById('bars'),
-        labels=document.getElementById('xlabels'),
-        yt=document.getElementById('yticks');
+  const bars=document.getElementById('bars');
+  const labels=document.getElementById('xlabels');
+  const yt=document.getElementById('yticks');
   bars.innerHTML=''; labels.innerHTML=''; yt.innerHTML='';
 
   const baseMon = mondayOfWeek( addDays(new Date(), weekOffset*7) );
   const endSun  = addDays(baseMon,6);
   const startISO = ymdLocal(baseMon), endISO = ymdLocal(endSun);
   const lbl = `${toEU(startISO)} – ${toEU(endISO)}${weekOffset===0?' (deze week)':''}`;
-  document.getElementById('weekRange').textContent = lbl;
+  const rangeEl = document.getElementById('weekRange'); if(rangeEl) rangeEl.textContent = lbl;
 
   const days = Array.from({length:7},(_,i)=> addDays(baseMon,i));
-  const dayTotals = days.map(d=> totalPerDate( ymdLocal(d) )/60);
+  const dayTotals = days.map(d=> totalPerDate( ymdLocal(d) )/60); // uren
+  const weekMin = Math.round(dayTotals.reduce((s,h)=> s + h*60, 0));
+  const weekTotalEl = document.getElementById('weekTotal'); if (weekTotalEl) weekTotalEl.textContent = 'Totaal week: ' + toHM(weekMin);
 
   const maxH=Math.max(AVG_DAY_HOURS*1.6, ...dayTotals, 1);
   const steps=4;
@@ -493,17 +427,17 @@ function drawWeek(){
   document.getElementById('targetLine').style.top = `${100 - (AVG_DAY_HOURS/maxH)*100}%`;
 
   const weekday=['Ma','Di','Wo','Do','Vr','Za','Zo'];
-  dayTotals.forEach((h)=>{
+  dayTotals.forEach((h,idx)=>{
     const b=document.createElement('div'); b.className='bar';
     b.style.height=`calc(${Math.max(0,Math.min(100,h/maxH*100))}% - 1px)`;
     const v=document.createElement('div'); v.className='val';
     v.textContent = h? h.toFixed(2).replace('.',',') : '';
     b.appendChild(v); bars.appendChild(b);
+    const xl=document.createElement('div'); xl.textContent = weekday[idx]; labels.appendChild(xl);
   });
-  labels.innerHTML = weekday.map(w=>`<div>${w}</div>`).join('');
 }
 
-/* --- Calculations and actions --- */
+/* --- Berekeningen & acties --- */
 function computeTotalMin(start,end,pauses,pauseExtraMin=0){
   const gross = (start && end)? diffHM(start,end) : 0;
   const pmin = (sumPauses(pauses)||0) + (Number(pauseExtraMin)||0);
@@ -532,7 +466,7 @@ function clearForm(){
 }
 function setNow(id){ const now=new Date(); const t=pad(now.getHours())+":"+pad(now.getMinutes()); document.getElementById(id).value=t; }
 
-/* --- Exports --- */
+/* --- Export/Import --- */
 function entriesInRange(startDateISO, endDateISO){
   const map=entriesByDate(); const out=[];
   Object.keys(map).forEach(d=>{ if(d>=startDateISO && d<=endDateISO){ out.push(...map[d]); }});
@@ -611,14 +545,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   setInterval(render, 60*1000);
 
   // Week navi
-  document.getElementById('prevWeek').addEventListener('click', ()=>{ weekOffset--; drawWeek(); });
-  document.getElementById('nextWeek').addEventListener('click', ()=>{ weekOffset++; drawWeek(); });
-  document.getElementById('thisWeek').addEventListener('click', ()=>{ weekOffset=0; drawWeek(); });
+  document.getElementById('prevWeek')?.addEventListener('click', ()=>{ weekOffset--; drawWeek(); });
+  document.getElementById('nextWeek')?.addEventListener('click', ()=>{ weekOffset++; drawWeek(); });
+  document.getElementById('thisWeek')?.addEventListener('click', ()=>{ weekOffset=0; drawWeek(); });
 
   // Swipe
   const wc = document.getElementById('weekChart'); let sx=null;
-  wc.addEventListener('touchstart', e=>{ sx=e.changedTouches[0].clientX; }, {passive:true});
-  wc.addEventListener('touchend', e=>{
+  wc?.addEventListener('touchstart', e=>{ sx=e.changedTouches[0].clientX; }, {passive:true});
+  wc?.addEventListener('touchend', e=>{
     if(sx==null) return;
     const dx=e.changedTouches[0].clientX - sx;
     if(Math.abs(dx)>50){ weekOffset += dx<0 ? 1 : -1; drawWeek(); }
