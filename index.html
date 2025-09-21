@@ -163,6 +163,7 @@
         <div class="row">
           <button class="ghost" id="syncPush">Upload data</button>
           <button class="ghost" id="syncPull">Download data</button>
+          <label><input type="checkbox" id="autoSync"> Auto-sync (push na elke wijziging, pull bij opstart)</label>
         </div>
         <small class="muted">Alternatieven: OneDrive/Google Drive/iCloud via gedeeld JSON-bestand. Deze knoppen ondersteunen Supabase of een privé Gist als eenvoudige API.</small>
       </div>
@@ -243,8 +244,8 @@ const collectPauses = containerId =>
   }).filter(Boolean);
 
 /* --- Derived --- */
-const upsert = entry => { const all=load(); const i=all.findIndex(x=>x.id===entry.id); if(i>=0) all[i]=entry; else all.push(entry); save(all); render(); };
-const removeEntry = id => { save(load().filter(x=>x.id!==id)); render(); };
+const upsert = entry => { const all=load(); const i=all.findIndex(x=>x.id===entry.id); if(i>=0) all[i]=entry; else all.push(entry); save(all); render();maybeAutoPush(); };
+const removeEntry = id => { save(load().filter(x=>x.id!==id)); maybeAutoPush(); render(); };
 const entriesByDate = () => load().reduce((acc,e)=>{ (acc[e.date]=acc[e.date]||[]).push(e); return acc; },{});
 const totalPerDate = date => (entriesByDate()[date]||[]).reduce((s,e)=> s+(e.totalMin||0), 0);
 const monthSpan = dt => { const y=dt.getFullYear(), m=dt.getMonth(); return {start:new Date(y,m,1), end:new Date(y,m+1,0)}; };
@@ -322,7 +323,7 @@ function renderArchive(){
     table.appendChild(thead); table.appendChild(tbody); dEl.appendChild(table); container.appendChild(dEl);
   });
 }
-function deleteDay(date){ save(load().filter(e=>e.date!==date)); render(); }
+function deleteDay(date){ save(load().filter(e=>e.date!==date)); maybeAutoPush(); render(); }
 function drawWeek(){
   const bars=document.getElementById('bars'), labels=document.getElementById('xlabels'), yt=document.getElementById('yticks');
   bars.innerHTML=''; labels.innerHTML=''; yt.innerHTML='';
@@ -475,9 +476,21 @@ async function syncPull(){
     }
   }catch(e){ alert('Sync fout.'); }
 }
+  const AUTO_KEY='prikklokAutoSync';
+const isAuto = ()=> localStorage.getItem(AUTO_KEY)==='1';
+const setAuto = v => localStorage.setItem(AUTO_KEY, v?'1':'0');
+function maybeAutoPush(){ if(isAuto() && document.getElementById('syncProvider').value!=='none'){ syncPush(); } }
+async function autoPullOnLoad(){ if(isAuto() && document.getElementById('syncProvider').value!=='none'){ await syncPull(); } }
+
 
 /* --- Wire up --- */
 window.addEventListener('DOMContentLoaded',()=>{
+   document.getElementById('autoSync').checked = isAuto();
+document.getElementById('autoSync').addEventListener('change', e=> setAuto(e.target.checked));
+autoPullOnLoad();
+// optioneel periodiek bij auto-sync
+setInterval(()=>{ if(isAuto()) syncPull(); }, 5*60*1000);
+
   // Defaults
   document.getElementById('date').value = todayISO();
   document.getElementById('saveEntry').addEventListener('click', saveFromForm);
