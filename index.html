@@ -4,14 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Prikklok</title>
+
+<!-- Kalmer, iOS-achtige UI -->
 <style>
   :root{
-    --bg:#f6f7fb;          /* zacht, koel canvas */
-    --card:#ffffff;        /* witte kaarten */
-    --ink:#0f172a;         /* donkerblauw i.p.v. hard zwart */
-    --muted:#6b7280;       /* grijs voor secundaire tekst */
-    --line:#e7e9ee;        /* dunne scheidingslijn */
-    --primary:#a78bfa;     /* zachte paars-lila (accent) */
+    --bg:#f6f7fb;
+    --card:#ffffff;
+    --ink:#0f172a;
+    --muted:#6b7280;
+    --line:#e7e9ee;
+    --primary:#a78bfa;
     --primary-strong:#7c61f2;
     --success:#0ea5a4;
     --danger:#ef4444;
@@ -46,19 +48,12 @@
   .soft-sep{height:1px;background:var(--line);margin:16px 0}
 
   /* Titel */
-  h1{
-    margin:6px 0 2px;
-    font-weight:800;
-    font-size:34px;
-    letter-spacing:.01em;
-    text-align:center;
-  }
+  h1{margin:6px 0 2px;font-weight:800;font-size:34px;letter-spacing:.01em;text-align:center}
   .sub{color:var(--muted); text-align:center; font-size:13px}
-
   h2{font-size:18px;margin:4px 0 10px}
   .muted{color:var(--muted)}
 
-  /* Inputs & buttons (pill-stijl) */
+  /* Inputs & buttons */
   label{display:block;font-size:12px;color:var(--muted);margin:.35rem 0 .25rem}
   input,button,textarea{
     width:100%;padding:12px 14px;border-radius:var(--radius-md);
@@ -76,7 +71,7 @@
   .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .row>div{flex:1}
 
-  /* Table – rustiger */
+  /* Tabel */
   table{width:100%;border-collapse:separate;border-spacing:0}
   thead th{font-weight:600;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
   tbody tr{background:var(--card)}
@@ -88,27 +83,36 @@
   .pill{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#f8f9fe;font-size:12px;color:var(--ink)}
   .right{float:right}
 
-  /* Pause rows */
+  /* Pauzerijen */
   .pauseRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
   .pauseRow .endcol{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
   .pauseRow .rm{width:auto;padding:9px 12px}
+  /* Notitie over volle breedte */
+  .pauseRow .note-wrap{grid-column:1/-1}
+  .pauseRow .note-wrap input{width:100%}
 
-  /* KPI cards */
-  .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-  .kpi .box{background:#fbfbfe;border:1px solid var(--line);border-radius:var(--radius-lg);padding:12px}
-  .kpi .box b{display:block;font-size:18px;margin-top:2px}
-  .ok{color:var(--success)} .bad{color:var(--danger)}
+  /* KPI → vervangen door radial */
+  .radial-wrap{display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px}
+  .radial{
+    position:relative;width:180px;height:180px;margin:auto;
+    display:grid;place-items:center;
+  }
+  .radial svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .radial .center{
+    position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+    font-weight:800;
+  }
+  .center .big{font-size:24px}
+  .center small{display:block;color:var(--muted);font-weight:600}
+  .delta{margin-top:8px;font-weight:700}
 
-  /* Weekgrafiek – rustig, soft ring look */
+  /* Weekgrafiek */
   .barwrap{
     position:relative;height:300px;padding:16px 16px 42px;border:1px solid var(--line);
     border-radius:var(--radius-lg);background:#fbfbfe;box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
   }
   .bars{position:absolute;inset:18px 18px 42px 18px;display:grid;grid-template-columns:repeat(7,1fr);gap:12px;align-items:end}
-  .bar{
-    background:linear-gradient(180deg, rgba(167,139,250,.9), rgba(124,97,242,.9));
-    border:0;border-radius:12px;position:relative;box-shadow:0 6px 16px rgba(124,97,242,.18);
-  }
+  .bar{background:linear-gradient(180deg, rgba(167,139,250,.9), rgba(124,97,242,.9));border:0;border-radius:12px;position:relative;box-shadow:0 6px 16px rgba(124,97,242,.18)}
   .bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--muted)}
   .xlabels{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-top:12px}
   .xlabels div{text-align:center;font-size:12px;color:var(--muted)}
@@ -119,124 +123,165 @@
   .legend .sw{width:10px;height:10px;border-radius:2px;background:var(--primary-strong);box-shadow:0 0 0 2px rgba(124,97,242,.15) inset}
   .legend .sw.target{background:transparent;border:2px solid var(--primary-strong)}
 
-  /* Collapsible (archief) */
+  /* Weeknavigatie – iOS segment, over de breedte */
+  .seg{
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:4px 0 10px;
+  }
+  .seg button{
+    background:#fff;border:1px solid var(--line);border-radius:999px;padding:10px 14px;
+    box-shadow:var(--shadow);font-weight:700;
+  }
+
+  /* Archief – meer spacing + afgeronde items */
   details.collapsible{border:1px solid var(--line);border-radius:var(--radius-xl);background:var(--card);box-shadow:var(--shadow)}
-  details.collapsible>summary{list-style:none;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px}
-  details.collapsible[open]{background:var(--card);}
+  details.collapsible>summary{list-style:none;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px;padding:12px 14px}
+  details.collapsible .content{padding:12px 14px}
+  .monthGroup{margin-bottom:14px}
+  .arch-row{
+    background:#fbfbfe;border:1px solid var(--line);border-radius:var(--radius-lg);
+    padding:10px 12px;margin-bottom:10px;
+  }
+  .arch-head{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .arch-date{font-weight:700}
+  .arch-total{font-weight:700;color:var(--ink)}
+  .arch-actions button{padding:6px 10px}
 
   /* Mobile */
   @media (max-width:520px){
     .wrap{padding:16px}
     h1{font-size:28px}
     .barwrap{height:260px}
+    .radial{width:160px;height:160px}
   }
 </style>
 </head>
 <body>
-<div class="wrap grid">
-  <div class="card">
-    <h1>Prikklok</h1>
-    <div class="muted" id="todayLabel"></div>
-    <div class="sep"></div>
-
+  <div class="wrap stack">
     <div class="card">
-      <h2>Uren registreren</h2>
-      <div class="row">
-        <div><label>Datum</label><input type="date" id="date"></div>
-        <div><label>Start</label><input type="time" id="start"></div>
-        <div><label>Einde <small class="muted">(mag na middernacht)</small></label><input type="time" id="end"></div>
-      </div>
-      <div class="row">
-        <div><label>Pauzes (extra min)</label><input type="number" id="pauseExtra" min="0" step="1" placeholder="bv. 15"></div>
-        <div><label>Of: totaal gewerkt (min)</label><input type="number" id="totalOverride" min="0" step="1" placeholder="bv. 450"></div>
-        <div><label>Dagnotitie</label><input id="dayNote" placeholder="optioneel"></div>
-      </div>
+      <h1>Prikklok</h1>
+      <div class="sub" id="todayLabel"></div>
 
-      <label style="margin-top:.6rem">Pauzes met notitie</label>
-      <div id="pauseList"></div>
-      <div class="row"><div style="flex-basis:100%"><button class="ghost" id="addPause">+ pauze</button></div></div>
-
-      <div class="row" style="margin-top:8px">
-        <button class="primary" id="saveEntry">Opslaan</button>
-        <button class="ghost" id="nowStart">Nu starten</button>
-        <button class="ghost" id="nowEnd">Nu stoppen</button>
-        <button class="ghost" id="clearForm">Leeg formulier</button>
-      </div>
-      <small class="muted">Opslag: lokaal. Sync: automatisch met GitHub Gist (zie onderaan).</small>
-    </div>
-
-    <div class="sep"></div>
-
-    <div class="grid cols">
-      <div class="card">
-        <h2>Vandaag</h2>
-        <table>
-          <thead><tr><th>Interval</th><th>Pauze</th><th>Totaal</th><th></th></tr></thead>
-          <tbody id="todayBody"></tbody>
-        </table>
-        <div class="right muted" id="todayTotal"></div>
-      </div>
+      <div class="soft-sep"></div>
 
       <div class="card">
-        <h2>Maandteller</h2>
-        <div class="kpi">
-          <div class="box"><span class="muted">Gewerkte uren</span><b id="monthWorkedH"></b></div>
-          <div class="box"><span class="muted">Te presteren</span><b id="monthExpectedH"></b><small class="muted" id="monthWd"></small></div>
-          <div class="box"><span class="muted">Verschil</span><b id="monthDeltaH"></b></div>
+        <h2>Uren registreren</h2>
+        <div class="row">
+          <div><label>Datum</label><input type="date" id="date"></div>
+          <div><label>Start</label><input type="time" id="start"></div>
+          <div><label>Einde</label><input type="time" id="end"></div>
+        </div>
+        <div class="row">
+          <div><label>Pauzes (extra min)</label><input type="number" id="pauseExtra" min="0" step="1" placeholder="bv. 15"></div>
+          <div><label>Of: totaal gewerkt (min)</label><input type="number" id="totalOverride" min="0" step="1" placeholder="bv. 450"></div>
+          <div><label>Dagnotitie</label><input id="dayNote" placeholder="optioneel"></div>
+        </div>
+
+        <label style="margin-top:.6rem">Pauzes met notitie</label>
+        <div id="pauseList"></div>
+        <div class="row"><div style="flex-basis:100%"><button class="ghost" id="addPause">+ pauze</button></div></div>
+
+        <div class="row" style="margin-top:8px">
+          <button class="primary" id="saveEntry">Opslaan</button>
+          <button class="ghost" id="nowStart">Nu starten</button>
+          <button class="ghost" id="nowEnd">Nu stoppen</button>
+          <button class="ghost" id="clearForm">Leeg formulier</button>
+        </div>
+        <small class="muted">Opslag: lokaal. Sync: automatisch met GitHub Gist (zie onderaan).</small>
+      </div>
+
+      <div class="soft-sep"></div>
+
+      <div class="cols">
+        <div class="card">
+          <h2>Vandaag</h2>
+          <table>
+            <thead><tr><th>Interval</th><th>Pauze</th><th>Totaal</th><th></th></tr></thead>
+            <tbody id="todayBody"></tbody>
+          </table>
+          <div class="right muted" id="todayTotal"></div>
+        </div>
+
+        <div class="card">
+          <h2>Maandteller</h2>
+          <div class="radial-wrap">
+            <div class="radial">
+              <svg viewBox="0 0 120 120">
+                <!-- achtergrond -->
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#eef1f7" stroke-width="12" />
+                <!-- progress -->
+                <circle id="monthArc" cx="60" cy="60" r="52" fill="none"
+                        stroke="url(#grad1)" stroke-linecap="round" stroke-width="12"
+                        stroke-dasharray="0 999" stroke-dashoffset="0" />
+                <defs>
+                  <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--primary)"/>
+                    <stop offset="100%" stop-color="var(--primary-strong)"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="center">
+                <div class="big" id="monthWorkedH">0u00</div>
+                <small>van <span id="monthExpectedH">0u00</span></small>
+              </div>
+            </div>
+            <div>
+              <div class="muted" id="monthWd"></div>
+              <div class="delta" id="monthDeltaH"></div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="card">
-      <h2>Overzicht van deze week</h2>
-      <div class="row" style="justify-content:space-between;align-items:center;margin:-4px 0 6px">
-        <div class="muted" id="weekRange"></div>
-        <div class="row" style="gap:6px">
+      <div class="card">
+        <h2>Overzicht van deze week</h2>
+
+        <div class="seg">
           <button class="ghost" id="prevWeek">◀</button>
           <button class="ghost" id="thisWeek">Vandaag</button>
           <button class="ghost" id="nextWeek">▶</button>
         </div>
-      </div>
-      <div class="barwrap" id="weekChart">
-        <div class="yticks" id="yticks"></div>
-        <div class="target" id="targetLine"></div>
-        <div class="bars" id="bars"></div>
-      </div>
-      <div class="xlabels" id="xlabels"></div>
-      <div class="right muted" id="weekTotal" style="margin-top:6px;font-weight:600"></div>
-      <div class="legend"><span class="sw"></span>Uren per dag <span class="sw target"></span>Doel 7u36</div>
-    </div>
+        <div class="muted" id="weekRange" style="margin-bottom:8px"></div>
 
-    <div class="card">
-      <details class="collapsible" id="archiveCollapse">
-        <summary>Archief per dag (per maand gegroepeerd)</summary>
-        <div class="content" id="archiveContainer"></div>
-      </details>
-    </div>
-
-    <div class="grid cols">
-      <div class="card">
-        <h2>Export</h2>
-        <div class="row">
-          <button class="primary" id="exportWeekCsv">CSV huidige week</button>
-          <button class="primary" id="exportMonthCsv">CSV huidige maand</button>
-          <button class="ghost" id="exportJson">Export JSON</button>
-          <label style="flex-basis:100%">Import JSON<input type="file" id="importJson" accept="application/json"></label>
+        <div class="barwrap" id="weekChart">
+          <div class="yticks" id="yticks"></div>
+          <div class="target" id="targetLine"></div>
+          <div class="bars" id="bars"></div>
         </div>
-        <small class="muted">CSV: datum, start, stop, totaal min, te presteren (7u36), pauze min, notities pauze.</small>
+        <div class="xlabels" id="xlabels"></div>
+        <div class="right muted" id="weekTotal" style="margin-top:6px;font-weight:600"></div>
+        <div class="legend"><span class="sw"></span>Uren per dag <span class="sw target"></span>Doel 7u36</div>
       </div>
 
       <div class="card">
-        <h2>GitHub Gist auto-sync</h2>
-        <label>Gist ID<input id="ghGist" placeholder="bv. 2591...fcc6"></label>
-        <label>GitHub Token<input id="ghToken" placeholder="ghp_..."></label>
-        <label>Bestandsnaam<input id="ghFile" value="prikklok.json"></label>
-        <div class="row"><button class="ghost" id="saveCreds">Bewaar op dit toestel</button></div>
-        <small class="muted">Token en Gist ID worden lokaal bewaard in <code>localStorage</code>. Auto-sync: pull bij laden, push na elke wijziging.</small>
+        <details class="collapsible" id="archiveCollapse">
+          <summary>Archief per dag (per maand gegroepeerd)</summary>
+          <div class="content" id="archiveContainer"></div>
+        </details>
+      </div>
+
+      <div class="cols">
+        <div class="card">
+          <h2>Export</h2>
+          <div class="row">
+            <button class="primary" id="exportWeekCsv">CSV huidige week</button>
+            <button class="primary" id="exportMonthCsv">CSV huidige maand</button>
+            <button class="ghost" id="exportJson">Export JSON</button>
+            <label style="flex-basis:100%">Import JSON<input type="file" id="importJson" accept="application/json"></label>
+          </div>
+          <small class="muted">CSV: datum, start, stop, totaal min, te presteren, pauze min, notities pauze.</small>
+        </div>
+
+        <div class="card">
+          <h2>GitHub Gist auto-sync</h2>
+          <label>Gist ID<input id="ghGist" placeholder="bv. 2591...fcc6"></label>
+          <label>GitHub Token<input id="ghToken" placeholder="ghp_..."></label>
+          <label>Bestandsnaam<input id="ghFile" value="prikklok.json"></label>
+          <div class="row"><button class="ghost" id="saveCreds">Bewaar op dit toestel</button></div>
+          <small class="muted">Token en Gist ID worden lokaal bewaard in <code>localStorage</code>. Auto-sync: pull bij laden, push na elke wijziging.</small>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
 <script>
 /* --- Config --- */
@@ -264,9 +309,6 @@ const download = (filename, text, type='text/plain') => {
   const blob = new Blob([text],{type}); const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
 };
-
-/* weeknavigatie helper */
-let weekOffset = 0;
 
 /* --- Storage --- */
 const load = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch(e){ return []; } };
@@ -330,7 +372,7 @@ function makePauseRow(containerId, from='', to='', note=''){
     <div class="endcol">
       <div><label>Tot</label><input type="time" class="pTo" value="${to}"></div>
       <button class="ghost rm" type="button" title="Verwijder">✕</button>
-      <div style="grid-column:1/-1">
+      <div class="note-wrap">
         <label>Notitie bij pauze</label>
         <input class="pNote" placeholder="bv. boodschap, verplaatsing" value="${note?.replace?.(/"/g,'&quot;')||''}">
       </div>
@@ -346,7 +388,7 @@ const collectPauses = containerId =>
     return (from&&to) ? {from,to,note:note||undefined} : null;
   }).filter(Boolean);
 
-/* --- Derived --- */
+/* --- Helpers --- */
 const upsert = entry => { const all=load(); const i=all.findIndex(x=>x.id===entry.id); if(i>=0) all[i]=entry; else all.push(entry); save(all); render(); };
 const removeEntry = id => { save(load().filter(x=>x.id!==id)); render(); };
 const entriesByDate = () => load().reduce((acc,e)=>{ (acc[e.date]=acc[e.date]||[]).push(e); return acc; },{});
@@ -377,20 +419,30 @@ function render(){
 
   drawWeek();
 
+  // Maandteller → radial
   const mWorkedMin = totalsThisMonth();
   const wd = workingDaysInMonth(new Date());
   const expectedMin = Math.round(wd * AVG_DAY_HOURS * 60);
   const delta = mWorkedMin - expectedMin;
+
   document.getElementById('monthWorkedH').textContent = toHM(mWorkedMin);
   document.getElementById('monthExpectedH').textContent = toHM(expectedMin);
   document.getElementById('monthWd').textContent = `${wd} werkdagen × 7u36`;
+
+  const arc = document.getElementById('monthArc');
+  const R = 52, C = 2*Math.PI*R;
+  const ratio = expectedMin>0 ? Math.min(mWorkedMin/expectedMin, 1.2) : 0; // cap at 120%
+  arc.setAttribute('stroke-dasharray', C + ' ' + C);
+  arc.setAttribute('stroke-dashoffset', C * (1 - Math.min(ratio,1)));
+
   const deltaEl = document.getElementById('monthDeltaH');
   deltaEl.textContent = (delta>=0?'+':'') + toHM(Math.abs(delta));
-  deltaEl.className = delta>=0? 'ok' : 'bad';
+  deltaEl.style.color = delta>=0 ? 'var(--success)' : 'var(--danger)';
 
   renderArchive();
 }
 
+/* Archief – cards per dag */
 function renderArchive(){
   const container=document.getElementById('archiveContainer'); container.innerHTML='';
   const map=entriesByDate(); const dates=Object.keys(map).sort();
@@ -402,70 +454,85 @@ function renderArchive(){
     let monthMin=0; monthDates.forEach(d=> monthMin+=totalPerDate(d));
     const monthDate=new Date(key+'-01T00:00:00');
     const label=cap(monthDate.toLocaleDateString('nl-BE',{month:'long',year:'numeric'}));
+
     const dEl=document.createElement('details'); dEl.className='monthGroup';
-    const sEl=document.createElement('summary'); sEl.innerHTML=`<span>${label}</span><span class="monthTotal">Totaal ${toHM(monthMin)}</span>`;
+    const sEl=document.createElement('summary');
+    sEl.innerHTML=`<span>${label}</span><span class="right muted">Totaal ${toHM(monthMin)}</span>`;
     dEl.appendChild(sEl);
-    const table=document.createElement('table');
-    const thead=document.createElement('thead'); thead.innerHTML='<tr><th>Datum</th><th>Totaal</th><th>Details</th><th></th></tr>';
-    const tbody=document.createElement('tbody');
+
+    const wrap=document.createElement('div');
+
     monthDates.forEach(d=>{
-      const tr=document.createElement('tr');
       const det = map[d].map(e=>{
-        const parts=[]; if(e.start&&e.end) parts.push(`${e.start}–${e.end}`);
+        const parts=[];
+        if(e.start&&e.end) parts.push(`${e.start}–${e.end}`);
         const pmin = totalPauseMinutes(e); parts.push(`pauze ${toHM(pmin)}`);
         const pNotes = (e.pauses||[]).map(p=>p.note).filter(Boolean).join('; ');
         if(pNotes) parts.push(`“${pNotes}”`);
         if(e.note) parts.push(`dag: “${e.note}”`);
         return parts.join(' · ');
       }).join(' | ');
-      tr.innerHTML = `<td>${toEU(d)}</td><td>${toHM(totalPerDate(d))}</td><td class="muted">${det||'—'}</td>
-                      <td><button class="ghost" type="button" onclick="deleteDay('${d}')">Wis dag</button></td>`;
-      tbody.appendChild(tr);
+
+      const row=document.createElement('div'); row.className='arch-row';
+      row.innerHTML=`
+        <div class="arch-head">
+          <div class="arch-date">${toEU(d)}</div>
+          <div class="arch-total">${toHM(totalPerDate(d))}</div>
+          <div class="arch-actions"><button class="ghost" type="button" onclick="deleteDay('${d}')">Wis dag</button></div>
+        </div>
+        <div class="muted">${det||'—'}</div>`;
+      wrap.appendChild(row);
     });
-    table.appendChild(thead); table.appendChild(tbody); dEl.appendChild(table); container.appendChild(dEl);
+
+    dEl.appendChild(wrap);
+    container.appendChild(dEl);
   });
 }
 function deleteDay(date){ save(load().filter(e=>e.date!==date)); render(); }
 
-/* --- Week grafiek + totaal --- */
+/* Weekgrafiek + totaal */
+let weekOffset = 0;
 function drawWeek(){
-  const bars=document.getElementById('bars');
-  const labels=document.getElementById('xlabels');
-  const yt=document.getElementById('yticks');
+  const bars=document.getElementById('bars'),
+        labels=document.getElementById('xlabels'),
+        yt=document.getElementById('yticks');
   bars.innerHTML=''; labels.innerHTML=''; yt.innerHTML='';
 
   const baseMon = mondayOfWeek( addDays(new Date(), weekOffset*7) );
   const endSun  = addDays(baseMon,6);
   const startISO = ymdLocal(baseMon), endISO = ymdLocal(endSun);
-  const lbl = `${toEU(startISO)} – ${toEU(endISO)}${weekOffset===0?' (deze week)':''}`;
-  const rangeEl = document.getElementById('weekRange'); if(rangeEl) rangeEl.textContent = lbl;
+  document.getElementById('weekRange').textContent =
+    `${toEU(startISO)} – ${toEU(endISO)}${weekOffset===0?' (deze week)':''}`;
 
   const days = Array.from({length:7},(_,i)=> addDays(baseMon,i));
   const dayTotals = days.map(d=> totalPerDate( ymdLocal(d) )/60); // uren
-  const weekMin = Math.round(dayTotals.reduce((s,h)=> s + h*60, 0));
-  const weekTotalEl = document.getElementById('weekTotal'); if (weekTotalEl) weekTotalEl.textContent = 'Totaal week: ' + toHM(weekMin);
 
+  // totaal week
+  const weekMin = Math.round(dayTotals.reduce((s,h)=> s + h*60, 0));
+  document.getElementById('weekTotal').textContent = 'Totaal week: ' + toHM(weekMin);
+
+  // raster
   const maxH=Math.max(AVG_DAY_HOURS*1.6, ...dayTotals, 1);
   const steps=4;
   for(let i=0;i<=steps;i++){
     const line=document.createElement('div');
     line.className='tick'; line.style.top=`${100-(i/steps)*100}%`;
-    line.style.opacity=i===0?0:1; yt.appendChild(line);
+    yt.appendChild(line);
   }
   document.getElementById('targetLine').style.top = `${100 - (AVG_DAY_HOURS/maxH)*100}%`;
 
   const weekday=['Ma','Di','Wo','Do','Vr','Za','Zo'];
-  dayTotals.forEach((h,idx)=>{
+  dayTotals.forEach((h,i)=>{
     const b=document.createElement('div'); b.className='bar';
     b.style.height=`calc(${Math.max(0,Math.min(100,h/maxH*100))}% - 1px)`;
     const v=document.createElement('div'); v.className='val';
     v.textContent = h? h.toFixed(2).replace('.',',') : '';
     b.appendChild(v); bars.appendChild(b);
-    const xl=document.createElement('div'); xl.textContent = weekday[idx]; labels.appendChild(xl);
+    const xl=document.createElement('div'); xl.textContent=weekday[i]; labels.appendChild(xl);
   });
 }
 
-/* --- Berekeningen & acties --- */
+/* --- Actions --- */
 function computeTotalMin(start,end,pauses,pauseExtraMin=0){
   const gross = (start && end)? diffHM(start,end) : 0;
   const pmin = (sumPauses(pauses)||0) + (Number(pauseExtraMin)||0);
@@ -494,7 +561,7 @@ function clearForm(){
 }
 function setNow(id){ const now=new Date(); const t=pad(now.getHours())+":"+pad(now.getMinutes()); document.getElementById(id).value=t; }
 
-/* --- Export/Import --- */
+/* Export/Import */
 function entriesInRange(startDateISO, endDateISO){
   const map=entriesByDate(); const out=[];
   Object.keys(map).forEach(d=>{ if(d>=startDateISO && d<=endDateISO){ out.push(...map[d]); }});
@@ -503,7 +570,7 @@ function entriesInRange(startDateISO, endDateISO){
 function entryToCsvRow(e){
   const pauseTotal = totalPauseMinutes(e);
   const pauseNotes = (e.pauses||[]).map(p=>p.note).filter(Boolean).join('; ');
-  const tePresteren = Math.round(AVG_DAY_HOURS*60); // 456
+  const tePresteren = Math.round(AVG_DAY_HOURS*60);
   return [ e.date, e.start||'', e.end||'', e.totalMin, tePresteren, pauseTotal, `"${(pauseNotes||'').replaceAll('"','""')}"` ].join(',');
 }
 function exportWeekCsv(){
@@ -534,7 +601,7 @@ function importJsonFile(file){
   reader.readAsText(file);
 }
 
-/* --- Wire up --- */
+/* Wire up */
 window.addEventListener('DOMContentLoaded',()=>{
   // Form
   document.getElementById('date').value = todayISO();
@@ -551,7 +618,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('exportJson').addEventListener('click', exportJson);
   document.getElementById('importJson').addEventListener('change', ev=>{ const f=ev.target.files?.[0]; if(f) importJsonFile(f); });
 
-  // Gist creds UI
+  // Gist creds
   document.getElementById('ghFile').value = localStorage.getItem(GIST_FILE_KEY) || DEFAULT_GIST_FILENAME;
   document.getElementById('ghGist').value = localStorage.getItem(GIST_ID_KEY) || '';
   document.getElementById('ghToken').value = localStorage.getItem(TOKEN_KEY) || '';
@@ -562,32 +629,32 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(id) localStorage.setItem(GIST_ID_KEY,id);
     if(tk) localStorage.setItem(TOKEN_KEY,tk);
     localStorage.setItem(GIST_FILE_KEY,fn);
-    alert('Bewaar klaar. Pagina herladen voor auto-pull.');
+    alert('Bewaar klaar. Herlaad de pagina om te synchroniseren.');
     location.reload();
   });
 
   // Auto sync
-  syncPull(); // bij laden
-  setInterval(syncPull, 5*60*1000); // periodiek pull
+  syncPull();
+  setInterval(syncPull, 5*60*1000);
   render();
   setInterval(render, 60*1000);
 
-  // Week navi
-  document.getElementById('prevWeek')?.addEventListener('click', ()=>{ weekOffset--; drawWeek(); });
-  document.getElementById('nextWeek')?.addEventListener('click', ()=>{ weekOffset++; drawWeek(); });
-  document.getElementById('thisWeek')?.addEventListener('click', ()=>{ weekOffset=0; drawWeek(); });
+  // Week navigatie
+  document.getElementById('prevWeek').addEventListener('click', ()=>{ weekOffset--; drawWeek(); });
+  document.getElementById('nextWeek').addEventListener('click', ()=>{ weekOffset++; drawWeek(); });
+  document.getElementById('thisWeek').addEventListener('click', ()=>{ weekOffset=0; drawWeek(); });
 
-  // Swipe
+  // Swipe nav
   const wc = document.getElementById('weekChart'); let sx=null;
-  wc?.addEventListener('touchstart', e=>{ sx=e.changedTouches[0].clientX; }, {passive:true});
-  wc?.addEventListener('touchend', e=>{
+  wc.addEventListener('touchstart', e=>{ sx=e.changedTouches[0].clientX; }, {passive:true});
+  wc.addEventListener('touchend', e=>{
     if(sx==null) return;
     const dx=e.changedTouches[0].clientX - sx;
     if(Math.abs(dx)>50){ weekOffset += dx<0 ? 1 : -1; drawWeek(); }
     sx=null;
   }, {passive:true});
 
-  // Pijltjestoetsen
+  // Keyboard
   window.addEventListener('keydown', e=>{
     if(e.key==='ArrowLeft'){ weekOffset--; drawWeek(); }
     if(e.key==='ArrowRight'){ weekOffset++; drawWeek(); }
