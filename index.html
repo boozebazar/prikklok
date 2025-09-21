@@ -18,7 +18,7 @@
   .cols{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
   .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:0 1px 0 rgba(15,23,42,.04)}
   label{display:block;font-size:.85rem;color:var(--muted);margin:.4rem 0 .3rem}
-  input,select,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#f9fbfe;color:var(--text)}
+  input,select,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#f9fbfe;color:#1f2a37}
   input[type="time"],input[type="date"]{letter-spacing:.3px}
   textarea{min-height:46px;resize:vertical}
   button{cursor:pointer;background:#f3f7ff}
@@ -55,10 +55,9 @@
   details.collapsible>summary::-webkit-details-marker{display:none}
   details.collapsible>summary::before{content:'▸';display:inline-block;transition:transform .2s ease;color:var(--petrol)}
   details.collapsible[open]>summary::before{transform:rotate(90deg)}
-  /* Mobile tweaks */
   @media (max-width:520px){
     .wrap{padding:12px}
-    input,button,select,textarea{font-size:16px} /* voorkomt iOS zoom */
+    input,button,select,textarea{font-size:16px}
   }
 </style>
 </head>
@@ -69,7 +68,6 @@
     <div class="muted" id="todayLabel"></div>
     <div class="sep"></div>
 
-    <!-- ÉÉN HOOFDMODULE -->
     <div class="card">
       <h2>Uren registreren</h2>
       <div class="row">
@@ -128,7 +126,7 @@
         <div class="bars" id="bars"></div>
       </div>
       <div class="xlabels" id="xlabels"></div>
-      <div class="legend"><span class="sw"></span>Uren per dag <span class="sw target"></span>Doel 7,36 u</div>
+      <div class="legend"><span class="sw"></span>Uren per dag <span class="sw target"></span>Doel 7,6 u</div>
     </div>
 
     <div class="card">
@@ -173,7 +171,7 @@
 
 <script>
 /* --- Config --- */
-const AVG_DAY_HOURS = 7.36; // 7u36min
+const AVG_DAY_HOURS = 7.6; // 7u36min
 const STORAGE_KEY = 'prikklokEntriesV2';
 
 /* Entry: { id, date:'YYYY-MM-DD', start:'HH:MM'|null, end:'HH:MM'|null,
@@ -184,11 +182,7 @@ const STORAGE_KEY = 'prikklokEntriesV2';
 const pad = n => String(n).padStart(2,'0');
 const toHM = mins => { const h=Math.floor(mins/60), m=mins%60; return `${h}u${pad(m)}`; };
 const parseTime = t => { const [H,M]=t.split(':').map(Number); return H*60+M; };
-const diffHM = (a,b) => { // ondersteunt over middernacht
-  const sa = parseTime(a), sb = parseTime(b);
-  const gross = sb >= sa ? (sb - sa) : (sb + 24*60 - sa);
-  return Math.max(0, gross);
-};
+const diffHM = (a,b) => { const sa=parseTime(a), sb=parseTime(b); const gross = sb>=sa ? (sb-sa) : (sb+1440-sa); return Math.max(0,gross); };
 const ymdLocal = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const fmtDate = d => new Date(d+'T00:00:00');
 const todayISO = () => ymdLocal(new Date());
@@ -204,6 +198,17 @@ const download = (filename, text, type='text/plain') => {
 
 /* --- Storage --- */
 const load = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch(e){ return []; } };
+let syncTimer=null;
+function scheduleSyncPush(){
+  if(!isAuto()) return;
+  if(document.getElementById('syncProvider').value==='none') return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncPush, 500);
+}
+function save(arr){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  scheduleSyncPush();
+}
 
 /* --- Pauses --- */
 const sumPauses = pauses => {
@@ -243,8 +248,8 @@ const collectPauses = containerId =>
   }).filter(Boolean);
 
 /* --- Derived --- */
-const upsert = entry => { const all=load(); const i=all.findIndex(x=>x.id===entry.id); if(i>=0) all[i]=entry; else all.push(entry); save(all); render();maybeAutoPush(); };
-const removeEntry = id => { save(load().filter(x=>x.id!==id)); maybeAutoPush(); render(); };
+const upsert = entry => { const all=load(); const i=all.findIndex(x=>x.id===entry.id); if(i>=0) all[i]=entry; else all.push(entry); save(all); render(); };
+const removeEntry = id => { save(load().filter(x=>x.id!==id)); render(); };
 const entriesByDate = () => load().reduce((acc,e)=>{ (acc[e.date]=acc[e.date]||[]).push(e); return acc; },{});
 const totalPerDate = date => (entriesByDate()[date]||[]).reduce((s,e)=> s+(e.totalMin||0), 0);
 const monthSpan = dt => { const y=dt.getFullYear(), m=dt.getMonth(); return {start:new Date(y,m,1), end:new Date(y,m+1,0)}; };
@@ -257,7 +262,6 @@ function render(){
   const fmt=now.toLocaleString('nl-BE',{weekday:'long', year:'numeric', month:'long', day:'numeric'});
   document.getElementById('todayLabel').textContent = cap(fmt);
 
-  // Vandaag
   const tISO = todayISO();
   const tBody = document.getElementById('todayBody'); tBody.innerHTML='';
   (entriesByDate()[tISO]||[]).sort((a,b)=> (a.start||'')<(b.start||'')?-1:1).forEach(e=>{
@@ -273,7 +277,6 @@ function render(){
   });
   document.getElementById('todayTotal').textContent = `Totaal vandaag: ${toHM(totalPerDate(tISO))}`;
 
-  // Weekgrafiek en maandkpi
   drawWeek();
   const mWorkedMin = totalsThisMonth();
   const wd = workingDaysInMonth(new Date());
@@ -281,7 +284,7 @@ function render(){
   const delta = mWorkedMin - expectedMin;
   document.getElementById('monthWorkedH').textContent = toHM(mWorkedMin);
   document.getElementById('monthExpectedH').textContent = toHM(expectedMin);
-  document.getElementById('monthWd').textContent = `${wd} werkdagen × 7,36 u`;
+  document.getElementById('monthWd').textContent = `${wd} werkdagen × 7,6 u`;
   const deltaEl = document.getElementById('monthDeltaH');
   deltaEl.textContent = (delta>=0?'+':'') + toHM(Math.abs(delta));
   deltaEl.className = delta>=0? 'ok' : 'bad';
@@ -322,7 +325,7 @@ function renderArchive(){
     table.appendChild(thead); table.appendChild(tbody); dEl.appendChild(table); container.appendChild(dEl);
   });
 }
-function deleteDay(date){ save(load().filter(e=>e.date!==date)); maybeAutoPush(); render(); }
+function deleteDay(date){ save(load().filter(e=>e.date!==date)); render(); }
 function drawWeek(){
   const bars=document.getElementById('bars'), labels=document.getElementById('xlabels'), yt=document.getElementById('yticks');
   bars.innerHTML=''; labels.innerHTML=''; yt.innerHTML='';
@@ -361,10 +364,6 @@ function saveFromForm(){
   upsert(entry);
   clearForm();
 }
-    function save(arr){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-  scheduleSyncPush();
-}
 
 function clearForm(){
   ['start','end','pauseExtra','totalOverride','dayNote'].forEach(id=> document.getElementById(id).value='');
@@ -376,17 +375,15 @@ function setNow(id){ const now=new Date(); const t=pad(now.getHours())+":"+pad(n
 /* --- Exports --- */
 function entriesInRange(startDateISO, endDateISO){
   const map=entriesByDate(); const out=[];
-  Object.keys(map).forEach(d=>{
-    if(d>=startDateISO && d<=endDateISO){ out.push(...map[d]); }
-  });
-  return out.sort((a,b)=> (a.date+b.start) < (b.date+a.start) ? -1:1);
+  Object.keys(map).forEach(d=>{ if(d>=startDateISO && d<=endDateISO){ out.push(...map[d]); }});
+  return out.sort((a,b)=> (a.date+(a.start||'')) < (b.date+(b.start||'')) ? -1:1);
 }
 function entryToCsvRow(e){
   const pauseTotal = totalPauseMinutes(e);
   const pauseNotes = (e.pauses||[]).map(p=>p.note).filter(Boolean).join('; ');
-  const tePresteren = Math.round(AVG_DAY_HOURS*60); // 7u36=456
+  const tePresteren = Math.round(AVG_DAY_HOURS*60); // 456
   return [
-    e.date, e.start||'', e.end||'', e.totalMin, tePresteren, pauseTotal, `"${pauseNotes.replaceAll('"','""')||''}"`
+    e.date, e.start||'', e.end||'', e.totalMin, tePresteren, pauseTotal, `"${(pauseNotes||'').replaceAll('"','""')}"`
   ].join(',');
 }
 function exportWeekCsv(){
@@ -417,7 +414,7 @@ function importJsonFile(file){
   reader.readAsText(file);
 }
 
-/* --- Sync stubs --- */
+/* --- Sync stubs (UI-gestuurd) --- */
 function syncUi(provider){
   const box=document.getElementById('syncFields'); box.innerHTML='';
   if(provider==='supabase'){
@@ -432,6 +429,7 @@ function syncUi(provider){
       <label>Bestandsnaam in gist</label><input id="ghFile" value="prikklok.json">`;
   }
 }
+
 async function syncPush(){
   const provider=document.getElementById('syncProvider').value;
   const data=load();
@@ -441,20 +439,39 @@ async function syncPush(){
       const key=document.getElementById('sbKey').value.trim();
       if(!url||!key) return alert('Vul Supabase URL en key in.');
       const rows=data.map(d=>({id:d.id, payload:d}));
-      await fetch(url,{method:'POST',headers:{'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify(rows)});
+      const r = await fetch(url,{
+        method:'POST',
+        headers:{
+          'apikey':key,'Authorization':'Bearer '+key,
+          'Content-Type':'application/json','Prefer':'resolution=merge-duplicates',
+          'Accept':'application/json'
+        },
+        body:JSON.stringify(rows)
+      });
+      if(!r.ok) throw new Error('Supabase '+r.status+' '+await r.text());
       alert('Upload verzonden.');
     }else if(provider==='gist'){
       const token=document.getElementById('ghToken').value.trim();
       const gist=document.getElementById('ghGist').value.trim();
       const fname=document.getElementById('ghFile').value.trim()||'prikklok.json';
       if(!token||!gist) return alert('Vul token en gist id in.');
-      await fetch('https://api.github.com/gists/'+gist,{method:'PATCH',headers:{'Authorization':'token '+token,'Content-Type':'application/json'},body:JSON.stringify({files:{[fname]:{content:JSON.stringify(data,null,2)}}})});
+      const r = await fetch('https://api.github.com/gists/'+gist,{
+        method:'PATCH',
+        headers:{
+          'Authorization':'token '+token,
+          'Accept':'application/vnd.github+json',
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({files:{[fname]:{content:JSON.stringify(data,null,2)}}})
+      });
+      if(!r.ok) throw new Error('GitHub '+r.status+' '+await r.text());
       alert('Gist geüpdatet.');
     }else{
       alert('Kies een provider of gebruik Export JSON.');
     }
-  }catch(e){ alert('Sync fout. Controleer rechten/URL.'); }
+  }catch(e){ alert('Sync fout. '+e.message); }
 }
+
 async function syncPull(){
   const provider=document.getElementById('syncProvider').value;
   try{
@@ -462,40 +479,45 @@ async function syncPull(){
       const url=document.getElementById('sbUrl').value.trim();
       const key=document.getElementById('sbKey').value.trim();
       if(!url||!key) return alert('Vul Supabase URL en key in.');
-      const res=await fetch(url+'?select=*',{headers:{'apikey':key,'Authorization':'Bearer '+key}});
+      const res=await fetch(url+'?select=*',{headers:{'apikey':key,'Authorization':'Bearer '+key,'Accept':'application/json'}});
+      if(!res.ok) throw new Error('Supabase '+res.status+' '+await res.text());
       const rows=await res.json();
       const data=rows.map(r=>r.payload).filter(Boolean);
       save(data); render(); alert('Download klaar.');
     }else if(provider==='gist'){
+      const token=document.getElementById('ghToken').value.trim();
       const gist=document.getElementById('ghGist').value.trim();
       const fname=document.getElementById('ghFile').value.trim()||'prikklok.json';
       if(!gist) return alert('Vul gist id in.');
-      const res=await fetch('https://api.github.com/gists/'+gist);
+      const res=await fetch('https://api.github.com/gists/'+gist,{
+        headers:{ 'Accept':'application/vnd.github+json', ...(token?{'Authorization':'token '+token}:{}) }
+      });
+      if(!res.ok) throw new Error('GitHub '+res.status+' '+await res.text());
       const j=await res.json();
-      const rawUrl=j.files?.[fname]?.raw_url; if(!rawUrl) return alert('Bestand niet gevonden in gist.');
-      const data=await fetch(rawUrl).then(r=>r.json());
+      const file=j.files?.[fname];
+      if(!file) return alert('Bestand niet gevonden in gist.');
+      const data = file.content ? JSON.parse(file.content) : await (await fetch(file.raw_url)).json();
       save(data); render(); alert('Download klaar.');
     }else{
       alert('Kies een provider of gebruik Import JSON.');
     }
-  }catch(e){ alert('Sync fout.'); }
+  }catch(e){ alert('Sync fout. '+e.message); }
 }
-  const AUTO_KEY='prikklokAutoSync';
+
+/* --- Auto-sync toggles --- */
+const AUTO_KEY='prikklokAutoSync';
 const isAuto = ()=> localStorage.getItem(AUTO_KEY)==='1';
 const setAuto = v => localStorage.setItem(AUTO_KEY, v?'1':'0');
-function maybeAutoPush(){ if(isAuto() && document.getElementById('syncProvider').value!=='none'){ syncPush(); } }
 async function autoPullOnLoad(){ if(isAuto() && document.getElementById('syncProvider').value!=='none'){ await syncPull(); } }
-
 
 /* --- Wire up --- */
 window.addEventListener('DOMContentLoaded',()=>{
-   document.getElementById('autoSync').checked = isAuto();
-document.getElementById('autoSync').addEventListener('change', e=> setAuto(e.target.checked));
-autoPullOnLoad();
-// optioneel periodiek bij auto-sync
-setInterval(()=>{ if(isAuto()) syncPull(); }, 5*60*1000);
+  // Auto-checkbox
+  if(localStorage.getItem(AUTO_KEY)===null) setAuto(true);
+  document.getElementById('autoSync').checked = isAuto();
+  document.getElementById('autoSync').addEventListener('change', e=> setAuto(e.target.checked));
 
-  // Defaults
+  // Defaults form
   document.getElementById('date').value = todayISO();
   document.getElementById('saveEntry').addEventListener('click', saveFromForm);
   document.getElementById('nowStart').addEventListener('click', ()=>setNow('start'));
@@ -504,32 +526,32 @@ setInterval(()=>{ if(isAuto()) syncPull(); }, 5*60*1000);
   document.getElementById('addPause').addEventListener('click', ()=>makePauseRow('pauseList'));
   makePauseRow('pauseList');
 
+  // Export/import
   document.getElementById('exportWeekCsv').addEventListener('click', exportWeekCsv);
   document.getElementById('exportMonthCsv').addEventListener('click', exportMonthCsv);
   document.getElementById('exportJson').addEventListener('click', exportJson);
   document.getElementById('importJson').addEventListener('change', ev=>{ const f=ev.target.files?.[0]; if(f) importJsonFile(f); });
 
-document.getElementById('syncProvider').addEventListener('change', e=>syncUi(e.target.value));
-document.getElementById('syncPush').addEventListener('click', syncPush);
-document.getElementById('syncPull').addEventListener('click', syncPull);
+  // Sync UI
+  document.getElementById('syncProvider').addEventListener('change', e=>syncUi(e.target.value));
+  document.getElementById('syncPush').addEventListener('click', syncPush);
+  document.getElementById('syncPull').addEventListener('click', syncPull);
 
-// standaard Gist selecteren + velden invullen uit localStorage
-document.getElementById('syncProvider').value = 'gist';
-syncUi('gist');
-document.getElementById('ghFile').value = 'prikklok.json';
-const t = localStorage.getItem('prikklokToken') || '';
-const g = localStorage.getItem('prikklokGistId') || '';
-if (t) document.getElementById('ghToken').value = t;
-if (g) document.getElementById('ghGist').value = g;
+  // Standaard Gist + velden vanuit localStorage
+  document.getElementById('syncProvider').value = 'gist';
+  syncUi('gist');
+  document.getElementById('ghFile').value = 'prikklok.json';
+  const t = localStorage.getItem('prikklokToken') || '';
+  const g = localStorage.getItem('prikklokGistId') || '';
+  if (t) document.getElementById('ghToken').value = t;
+  if (g) document.getElementById('ghGist').value = g;
 
-// auto-sync standaard aan
-setAuto(true);
-document.getElementById('autoSync').checked = true;
-autoPullOnLoad();
+  // Auto-sync
+  autoPullOnLoad();
+  setInterval(()=>{ if(isAuto()) syncPull(); }, 5*60*1000);
 
-render();
-setInterval(render, 60*1000);
-
+  render();
+  setInterval(render, 60*1000);
 });
 </script>
 </body>
